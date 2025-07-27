@@ -5,7 +5,7 @@ use atrium_api::{
 };
 use atrium_xrpc_client::reqwest::ReqwestClient;
 use clap::Parser;
-use color_eyre::{Result, eyre::eyre};
+use color_eyre::{eyre::eyre, Result, Section};
 use std::collections::HashMap;
 
 #[derive(Parser)]
@@ -54,7 +54,7 @@ async fn create_authenticated_agent(user: &str) -> Result<MyAgent> {
         MemorySessionStore::default(),
     );
 
-    let password = std::env::var("BSKY_PASSWORD")?;
+    let password = std::env::var("BSKY_PASSWORD").suggestion("Ensure the BSKY_PASSWORD variable is defined")?;
 
     agent.login(user, &password).await?;
 
