@@ -1,4 +1,4 @@
-use atrium_api::agent::atp_agent::{store::MemorySessionStore, AtpAgent};
+use atrium_api::agent::atp_agent::{AtpAgent, store::MemorySessionStore};
 use atrium_xrpc_client::reqwest::ReqwestClient;
 use clap::Parser;
 use std::collections::HashSet;
@@ -59,7 +59,11 @@ async fn create_authenticated_agent() -> Result<MyAgent, Box<dyn std::error::Err
     agent.login(&identifier, &password).await?;
 
     Ok(agent)
-}async fn resolve_handle(agent: &MyAgent, handle: &str) -> Result<String, Box<dyn std::error::Error>> {
+}
+async fn resolve_handle(
+    agent: &MyAgent,
+    handle: &str,
+) -> Result<String, Box<dyn std::error::Error>> {
     use atrium_api::com::atproto::identity::resolve_handle;
 
     let clean_handle = handle.trim_start_matches('@');
@@ -83,7 +87,10 @@ async fn create_authenticated_agent() -> Result<MyAgent, Box<dyn std::error::Err
     Ok(response.data.did.to_string())
 }
 
-async fn get_all_followers(agent: &MyAgent, did: &str) -> Result<HashSet<String>, Box<dyn std::error::Error>> {
+async fn get_all_followers(
+    agent: &MyAgent,
+    did: &str,
+) -> Result<HashSet<String>, Box<dyn std::error::Error>> {
     use atrium_api::app::bsky::graph::get_followers;
 
     let mut all_followers = HashSet::new();
@@ -117,19 +124,16 @@ async fn get_all_followers(agent: &MyAgent, did: &str) -> Result<HashSet<String>
     Ok(all_followers)
 }
 
-async fn get_handle_from_did(agent: &MyAgent, did: &str) -> Result<String, Box<dyn std::error::Error>> {
+async fn get_handle_from_did(
+    agent: &MyAgent,
+    did: &str,
+) -> Result<String, Box<dyn std::error::Error>> {
     use atrium_api::app::bsky::actor::get_profile;
 
     let params = get_profile::ParametersData {
         actor: did.parse()?,
     };
 
-    let response = agent
-        .api
-        .app
-        .bsky
-        .actor
-        .get_profile(params.into())
-        .await?;
+    let response = agent.api.app.bsky.actor.get_profile(params.into()).await?;
     Ok(response.data.handle.to_string())
 }
