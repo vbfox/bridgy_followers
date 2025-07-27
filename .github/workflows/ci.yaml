@@ -16,10 +16,14 @@ jobs:
       - name: Git checkout
         uses: actions/checkout@v4
       - name: Set up Rust
-        run: cargo version
+        run: |
+          cargo version
+          rustup component add clippy rustfmt
       - name: Rust Cache
         uses: Swatinem/rust-cache@v2
       - name: Build
         run: cargo build
       - name: Clippy
         run: cargo clippy --all-targets --all-features --tests --benches -- -Dclippy::all -Dclippy::pedantic
+      - name: Format Check
+        run: cargo fmt --all -- --check
