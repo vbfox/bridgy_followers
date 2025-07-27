@@ -1,0 +1,19 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+env:
+  RUSTFLAGS: '-Dwarnings'
+  CARGO_TERM_COLOR: always
+
+jobs:
+  ci:
+    name: CI
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@clippy
+      - run: cargo build
+      - run: cargo clippy --all-targets --all-features --tests --benches -- -Dclippy::all -Dclippy::pedantic
