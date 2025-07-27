@@ -13,9 +13,13 @@ jobs:
     name: CI
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@clippy
+      - name: Git checkout
+        uses: actions/checkout@v4
+      - name: Set up Rust
+        run: cargo version
       - name: Rust Cache
         uses: Swatinem/rust-cache@v2
-      - run: cargo build
-      - run: cargo clippy --all-targets --all-features --tests --benches -- -Dclippy::all -Dclippy::pedantic
+      - name: Build
+        run: cargo build
+      - name: Clippy
+        run: cargo clippy --all-targets --all-features --tests --benches -- -Dclippy::all -Dclippy::pedantic
