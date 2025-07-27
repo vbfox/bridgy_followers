@@ -5,6 +5,7 @@ use atrium_api::{
 };
 use atrium_xrpc_client::reqwest::ReqwestClient;
 use clap::Parser;
+use color_eyre::{Result, eyre::eyre};
 use std::collections::HashMap;
 
 #[derive(Parser)]
@@ -18,7 +19,9 @@ struct Cli {
 type MyAgent = AtpAgent<MemorySessionStore, ReqwestClient>;
 
 #[tokio::main]
-async fn main() -> Result<(), Box<dyn std::error::Error>> {
+async fn main() -> Result<()> {
+    color_eyre::install()?;
+
     let cli = Cli::parse();
     println!("Starting...");
 
@@ -45,7 +48,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
-async fn create_authenticated_agent(user: &str) -> Result<MyAgent, Box<dyn std::error::Error>> {
+async fn create_authenticated_agent(user: &str) -> Result<MyAgent> {
     let agent = AtpAgent::new(
         ReqwestClient::new("https://bsky.social"),
         MemorySessionStore::default(),
@@ -60,7 +63,7 @@ async fn create_authenticated_agent(user: &str) -> Result<MyAgent, Box<dyn std::
 async fn resolve_handle(
     agent: &MyAgent,
     handle: &str,
-) -> Result<String, Box<dyn std::error::Error>> {
+) -> Result<String> {
     use atrium_api::com::atproto::identity::resolve_handle;
 
     let clean_handle = handle.trim_start_matches('@');
@@ -71,7 +74,7 @@ async fn resolve_handle(
     }
 
     let params = resolve_handle::ParametersData {
-        handle: clean_handle.parse()?,
+        handle: clean_handle.parse().map_err(|e| eyre!("Failed to parse handle: {}", e))?,
     };
 
     let response = agent
@@ -87,7 +90,7 @@ async fn resolve_handle(
 async fn get_known_followers(
     agent: &MyAgent,
     did: &str,
-) -> Result<HashMap<Did, Object<ProfileViewData>>, Box<dyn std::error::Error>> {
+) -> Result<HashMap<Did, Object<ProfileViewData>>> {
     use atrium_api::app::bsky::graph::get_known_followers;
 
     let mut all_followers = HashMap::new();
@@ -95,9 +98,9 @@ async fn get_known_followers(
 
     loop {
         let params = get_known_followers::ParametersData {
-            actor: did.parse()?,
+            actor: did.parse().map_err(|e| eyre!("Failed to parse DID: {}", e))?,
             cursor: cursor.clone(),
-            limit: Some(100.try_into()?),
+            limit: Some(100.try_into().map_err(|e| eyre!("Failed to convert limit: {}", e))?),
         };
 
         let response = agent
