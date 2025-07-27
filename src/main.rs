@@ -5,7 +5,7 @@ use atrium_api::{
 };
 use atrium_xrpc_client::reqwest::ReqwestClient;
 use clap::Parser;
-use color_eyre::{eyre::eyre, Result, Section};
+use color_eyre::{Result, Section, eyre::eyre};
 use std::collections::HashMap;
 
 #[derive(Parser)]
@@ -43,16 +43,14 @@ async fn create_authenticated_agent(user: &str) -> Result<MyAgent> {
         MemorySessionStore::default(),
     );
 
-    let password = std::env::var("BSKY_PASSWORD").suggestion("Ensure the BSKY_PASSWORD variable is defined")?;
+    let password = std::env::var("BSKY_PASSWORD")
+        .suggestion("Ensure the BSKY_PASSWORD variable is defined")?;
 
     agent.login(user, &password).await?;
 
     Ok(agent)
 }
-async fn resolve_handle(
-    agent: &MyAgent,
-    handle: &str,
-) -> Result<String> {
+async fn resolve_handle(agent: &MyAgent, handle: &str) -> Result<String> {
     use atrium_api::com::atproto::identity::resolve_handle;
 
     let clean_handle = handle.trim_start_matches('@');
@@ -63,7 +61,9 @@ async fn resolve_handle(
     }
 
     let params = resolve_handle::ParametersData {
-        handle: clean_handle.parse().map_err(|e| eyre!("Failed to parse handle: {}", e))?,
+        handle: clean_handle
+            .parse()
+            .map_err(|e| eyre!("Failed to parse handle: {}", e))?,
     };
 
     let response = agent
@@ -87,9 +87,14 @@ async fn get_known_followers(
 
     loop {
         let params = get_known_followers::ParametersData {
-            actor: did.parse().map_err(|e| eyre!("Failed to parse DID: {}", e))?,
+            actor: did
+                .parse()
+                .map_err(|e| eyre!("Failed to parse DID: {}", e))?,
             cursor: cursor.clone(),
-            limit: Some(100.try_into().map_err(|e| eyre!("Failed to convert limit: {}", e))?),
+            limit: Some(
+                100.try_into()
+                    .map_err(|e| eyre!("Failed to convert limit: {}", e))?,
+            ),
         };
 
         let response = agent
