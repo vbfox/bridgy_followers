@@ -23,7 +23,7 @@ async fn main() -> Result<()> {
     color_eyre::install()?;
 
     let cli = Cli::parse();
-    let agent = create_authenticated_agent(&cli.user.trim_start_matches("@")).await?;
+    let agent = create_authenticated_agent(cli.user.trim_start_matches('@')).await?;
 
     let bridgy_did = resolve_handle(&agent, "ap.brid.gy").await?;
     let bridgy_followers = get_known_followers(&agent, &bridgy_did).await?;
@@ -32,7 +32,7 @@ async fn main() -> Result<()> {
     // For each user in intersection, get their handle and display Mastodon equivalent
     for follower in bridgy_followers.values() {
         let mastodon_handle = format!("@{}@bsky.brid.gy", follower.handle.as_str());
-        println!("{},true,false,", mastodon_handle);
+        println!("{mastodon_handle},true,false,");
     }
     Ok(())
 }
