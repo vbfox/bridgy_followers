@@ -23,17 +23,10 @@ async fn main() -> Result<()> {
     color_eyre::install()?;
 
     let cli = Cli::parse();
-    println!("Starting...");
-
     let agent = create_authenticated_agent(&cli.user.trim_start_matches("@")).await?;
-    println!("Successfully authenticated {}", cli.user);
 
-    // Get followers for @ap.brid.gy
     let bridgy_did = resolve_handle(&agent, "ap.brid.gy").await?;
     let bridgy_followers = get_known_followers(&agent, &bridgy_did).await?;
-    println!("Found {} followers for @ap.brid.gy", bridgy_followers.len());
-    println!();
-    println!();
     println!("Account address,Show boosts,Notify on new posts,Languages");
 
     // For each user in intersection, get their handle and display Mastodon equivalent
