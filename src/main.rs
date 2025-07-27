@@ -25,12 +25,8 @@ async fn main() -> Result<()> {
     let cli = Cli::parse();
     println!("Starting...");
 
-    let agent = create_authenticated_agent(&cli.user).await?;
+    let agent = create_authenticated_agent(&cli.user.trim_start_matches("@")).await?;
     println!("Successfully authenticated {}", cli.user);
-
-    // Resolve the input user to DID
-    let user_did = resolve_handle(&agent, &cli.user).await?;
-    println!("Resolved {} to DID: {}", cli.user, user_did);
 
     // Get followers for @ap.brid.gy
     let bridgy_did = resolve_handle(&agent, "ap.brid.gy").await?;
