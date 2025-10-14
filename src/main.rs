@@ -2,6 +2,8 @@ use atrium_api::agent::atp_agent::{AtpAgent, store::MemorySessionStore};
 use atrium_xrpc_client::reqwest::ReqwestClient;
 use clap::Parser;
 use color_eyre::Result;
+use std::fs::File;
+use std::io::{self, Write};
 use std::path::PathBuf;
 
 use bsky::{get_known_followers, resolve_handle};
@@ -21,6 +23,9 @@ struct Cli {
         help = "Path to configuration file"
     )]
     config: PathBuf,
+
+    #[arg(short, long, help = "Output file (defaults to stdout)")]
+    output: Option<PathBuf>,
 }
 
 #[tokio::main]
@@ -34,7 +39,17 @@ async fn main() -> Result<()> {
 
     let bridgy_did = resolve_handle(&agent, "ap.brid.gy").await?;
     let bridgy_followers = get_known_followers(&agent, &bridgy_did).await?;
-    println!("Account address,Show boosts,Notify on new posts,Languages");
+
+    // Open output destination
+    let mut output: Box<dyn Write> = match cli.output {
+        Some(path) => Box::new(File::create(path)?),
+        None => Box::new(io::stdout()),
+    };
+
+    writeln!(
+        output,
+        "Account address,Show boosts,Notify on new posts,Languages"
+    )?;
 
     // For each user in intersection, get their handle and display Mastodon equivalent
     for follower in bridgy_followers.values() {
@@ -50,7 +65,7 @@ async fn main() -> Result<()> {
         }
 
         let mastodon_handle = format!("@{}@bsky.brid.gy", handle);
-        println!("{mastodon_handle},true,false,");
+        writeln!(output, "{mastodon_handle},true,false,")?;
     }
     Ok(())
 }

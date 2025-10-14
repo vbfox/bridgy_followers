@@ -20,16 +20,26 @@ The `ignored_accounts` list is optional and allows you to exclude specific accou
 ## Usage
 
 ```sh
-bridgy_followers [config_file]
+bridgy_followers [OPTIONS] [config_file]
 ```
 
-If no config file is specified, it defaults to `bridgy_followers.toml`.
+### Options
 
-Example:
+- `-o, --output <FILE>` - Write output to a file instead of stdout
+- `[config_file]` - Path to configuration file (defaults to `bridgy_followers.toml`)
+
+### Examples
+
+Output to stdout:
+
 ```sh
-bridgy_followers > new_follows.csv
-# or with custom config path
-bridgy_followers my_config.toml > new_follows.csv
+bridgy_followers
+```
+
+Output to a file with a custom configuration file:
+
+```sh
+bridgy_followers my_config.toml -o followers.csv
 ```
 
 Import the new follows into Mastodon using the `/settings/imports` page (Preferences > Import and Export > Import).
