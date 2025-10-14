@@ -1,0 +1,7 @@
+username = "your.handle.bsky.social"
+password = "your-app-password"
+
+# Optional: List of accounts to ignore in the output
+ignored_accounts = [
+    # "example.bsky.social",
+]
