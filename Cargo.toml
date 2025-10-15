@@ -11,5 +11,10 @@ atrium-xrpc-client = "0.5"
 clap = { version = "4.0", features = ["derive"] }
 color-eyre = "0.6"
 serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
 toml = "0.8"
 tokio = { version = "1.0", features = ["full"] }
+megalodon = "0.13"
+dialoguer = "0.11"
+dirs = "5.0"
+csv = "1.3"
