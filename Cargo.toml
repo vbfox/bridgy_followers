@@ -1,10 +1,13 @@
-[package]
-name = "bridgy_followers"
+[workspace]
+members = ["crates/bridgy_followers"]
+resolver = "2"
+
+[workspace.package]
 version = "0.1.0"
 edition = "2024"
 license = "MIT"
 
-[dependencies]
+[workspace.dependencies]
 atrium-api = "0.25"
 atrium-common = "0.1"
 atrium-xrpc-client = "0.5"

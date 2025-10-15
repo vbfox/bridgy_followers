@@ -1,0 +1,24 @@
+[package]
+name = "bridgy_followers"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[[bin]]
+name = "bridgy_followers"
+path = "src/main.rs"
+
+[dependencies]
+atrium-api.workspace = true
+atrium-common.workspace = true
+atrium-xrpc-client.workspace = true
+clap.workspace = true
+color-eyre.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+toml.workspace = true
+tokio.workspace = true
+megalodon.workspace = true
+dialoguer.workspace = true
+dirs.workspace = true
+csv.workspace = true
