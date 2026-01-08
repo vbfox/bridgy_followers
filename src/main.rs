@@ -64,7 +64,7 @@ async fn main() -> Result<()> {
             continue;
         }
 
-        let mastodon_handle = format!("@{}@bsky.brid.gy", handle);
+        let mastodon_handle = format!("@{handle}@bsky.brid.gy");
         writeln!(output, "{mastodon_handle},true,false,")?;
     }
     Ok(())
