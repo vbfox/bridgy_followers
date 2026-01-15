@@ -1,0 +1,4 @@
+[submodule "vendor/megalodon-rs"]
+	path = vendor/megalodon-rs
+	url = git@github.com:vbfox/fork_megalodon-rs.git
+	branch = link_header
