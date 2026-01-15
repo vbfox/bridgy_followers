@@ -100,7 +100,10 @@ async fn main() -> Result<()> {
         writeln!(output, "{mastodon_handle},true,false,")?;
     }
 
-    eprintln!("\nFiltered out {} accounts already followed on Mastodon", filtered_count);
+    eprintln!(
+        "\nFiltered out {} accounts already followed on Mastodon",
+        filtered_count
+    );
     eprintln!("Total bridgy followers (after ignored): {}", total_count);
     eprintln!("New accounts to follow: {}", total_count - filtered_count);
 

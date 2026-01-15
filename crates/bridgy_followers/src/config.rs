@@ -33,8 +33,14 @@ impl Config {
         // Update mastodon section if present
         if let Some(mastodon) = &self.mastodon {
             let mut mastodon_table = toml::map::Map::new();
-            mastodon_table.insert("server".to_string(), toml::Value::String(mastodon.server.clone()));
-            mastodon_table.insert("access_token".to_string(), toml::Value::String(mastodon.access_token.clone()));
+            mastodon_table.insert(
+                "server".to_string(),
+                toml::Value::String(mastodon.server.clone()),
+            );
+            mastodon_table.insert(
+                "access_token".to_string(),
+                toml::Value::String(mastodon.access_token.clone()),
+            );
 
             if let toml::Value::Table(ref mut table) = doc {
                 table.insert("mastodon".to_string(), toml::Value::Table(mastodon_table));

@@ -1,5 +1,5 @@
 [workspace]
-members = ["crates/bridgy_followers"]
+members = ["crates/bridgy_followers", "vendor/megalodon-rs"]
 resolver = "2"
 
 [workspace.package]
@@ -17,7 +17,7 @@ serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 toml = "0.8"
 tokio = { version = "1.0", features = ["full"] }
-megalodon = "0.13"
+megalodon = { path = "vendor/megalodon-rs" }
 dialoguer = "0.11"
 dirs = "5.0"
 csv = "1.3"
