@@ -2,6 +2,7 @@ use atrium_api::agent::atp_agent::{AtpAgent, store::MemorySessionStore};
 use atrium_xrpc_client::reqwest::ReqwestClient;
 use clap::Parser;
 use color_eyre::Result;
+use keyring::CredentialBuilder;
 use std::fs::File;
 use std::io::{self, Write};
 use std::path::PathBuf;
@@ -14,6 +15,7 @@ use crate::config::Config;
 mod bsky;
 mod config;
 mod mastodon;
+mod credentials;
 
 #[derive(Parser)]
 #[command(name = "bridgy_followers")]
@@ -36,13 +38,16 @@ async fn main() -> Result<()> {
     let cli = Cli::parse();
     let mut config = Config::from_file(&cli.config)?;
 
+    let credentials = keyring::default::default_credential_builder();
+
     // Check if Mastodon authentication exists, if not, authenticate
-    let mastodon_config = match &config.mastodon {
-        Some(cfg) => {
+    let (mastodon_config, mastodon_token) = match &config.mastodon {
+       Some(cfg) => {
             println!("Using saved Mastodon authentication for {}", cfg.server);
-            cfg.clone()
+            let mastodon_token_credential = mastodon::get_access_token(&credentials)?;
+            (cfg.clone(), token)
         }
-        None => {
+        _ => {
             println!("No saved Mastodon authentication found. Let's authenticate!\n");
             let mastodon_cfg = mastodon::authenticate().await?;
             config.mastodon = Some(mastodon_cfg.clone());

@@ -8,14 +8,7 @@ pub struct Config {
     pub password: String,
     #[serde(default)]
     pub ignored_accounts: Vec<String>,
-    #[serde(default)]
-    pub mastodon: Option<MastodonConfig>,
-}
-
-#[derive(Debug, Deserialize, Serialize, Clone)]
-pub struct MastodonConfig {
-    pub server: String,
-    pub access_token: String,
+    pub mastodon_server: Option<String>,
 }
 
 impl Config {
@@ -31,7 +24,7 @@ impl Config {
         let mut doc: toml::Value = toml::from_str(&contents)?;
 
         // Update mastodon section if present
-        if let Some(mastodon) = &self.mastodon {
+        if let Some(mastodon) = &self.mastodon_server {
             let mut mastodon_table = toml::map::Map::new();
             mastodon_table.insert(
                 "server".to_string(),

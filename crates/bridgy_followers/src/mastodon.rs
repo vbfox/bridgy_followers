@@ -1,5 +1,6 @@
 use color_eyre::{Result, eyre::eyre};
 use dialoguer::Input;
+use keyring::{Credential, CredentialBuilder};
 use megalodon::{
     Megalodon,
     megalodon::{AccountFollowersInputOptions, AppInputOptions},
@@ -138,3 +139,5 @@ pub async fn get_following(config: &MastodonConfig) -> Result<HashSet<String>> {
 
     Ok(following)
 }
+
+
