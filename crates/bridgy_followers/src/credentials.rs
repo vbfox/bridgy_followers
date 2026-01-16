@@ -19,3 +19,24 @@ pub fn get_mastodon_access_token(
         &format!("mastodon_access_token_{server}"),
     )
 }
+
+/// Delete stored credentials from keyring
+pub fn delete_credentials(
+    credential_builder: &Box<CredentialBuilder>,
+    mastodon_server: Option<&str>,
+    bluesky_username: Option<&str>,
+) {
+    // Delete Mastodon credential if server is known
+    if let Some(server) = mastodon_server {
+        if let Ok(credential) = get_mastodon_access_token(credential_builder, server) {
+            let _ = credential.delete_credential();
+        }
+    }
+
+    // Delete Bluesky credential if username is known
+    if let Some(username) = bluesky_username {
+        if let Ok(credential) = get_bluesky_password(credential_builder, username) {
+            let _ = credential.delete_credential();
+        }
+    }
+}

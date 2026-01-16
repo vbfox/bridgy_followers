@@ -14,23 +14,49 @@ mod mastodon;
 #[derive(Parser)]
 #[command(name = "bridgy_followers")]
 #[command(about = "Find intersection of followers between a user and @ap.brid.gy")]
-struct Cli {
-    #[arg(
-        default_value = "bridgy_followers.toml",
-        help = "Path to configuration file"
-    )]
-    config: PathBuf,
+#[command(args_conflicts_with_subcommands = true)]
+struct CliArgs {
+    #[command(subcommand)]
+    command: Command,
+}
 
-    #[arg(short, long, help = "Output file (defaults to stdout)")]
-    output: Option<PathBuf>,
+#[derive(Parser)]
+enum Command {
+    /// Sync followers from Bluesky to Mastodon (default)
+    Sync {
+        #[arg(
+            default_value = "bridgy_followers.toml",
+            help = "Path to configuration file"
+        )]
+        config: PathBuf,
+
+        #[arg(short, long, help = "Output file (defaults to stdout)")]
+        output: Option<PathBuf>,
+    },
+    /// Clear stored credentials and configuration
+    Forget {
+        #[arg(
+            default_value = "bridgy_followers.toml",
+            help = "Path to configuration file"
+        )]
+        config: PathBuf,
+    },
 }
 
 #[tokio::main]
 async fn main() -> Result<()> {
     color_eyre::install()?;
 
-    let cli = Cli::parse();
-    let mut config = Config::from_file(&cli.config)?;
+    let cli = CliArgs::parse();
+
+    match cli.command {
+        Command::Sync { config, output } => sync_command(config, output).await,
+        Command::Forget { config } => forget_command(config).await,
+    }
+}
+
+async fn sync_command(config_path: PathBuf, output_path: Option<PathBuf>) -> Result<()> {
+    let mut config = Config::from_file(&config_path)?;
 
     let credential_builder = keyring::default::default_credential_builder();
     let mastodon = mastodon::authenticate(&credential_builder, &mut config).await?;
@@ -40,7 +66,7 @@ async fn main() -> Result<()> {
     let bridgy_followers = get_known_bridgy_followers(&bluesky, &config.ignored_accounts()).await?;
 
     // Open output destination
-    let mut output: Box<dyn Write> = match cli.output {
+    let mut output: Box<dyn Write> = match output_path {
         Some(path) => Box::new(File::create(path)?),
         None => Box::new(io::stdout()),
     };
@@ -76,6 +102,30 @@ async fn main() -> Result<()> {
     );
     eprintln!("Total bridgy followers (after ignored): {}", total_count);
     eprintln!("New accounts to follow: {}", total_count - filtered_count);
+
+    Ok(())
+}
+
+async fn forget_command(config_path: PathBuf) -> Result<()> {
+    let mut config = Config::from_file(&config_path)?;
+
+    let credential_builder = keyring::default::default_credential_builder();
+
+    // Get current values before clearing
+    let bluesky_username = config.bluesky_username().map(|s| s.to_string());
+    let mastodon_server = config.mastodon_server().map(|s| s.to_string());
+
+    // Delete credentials from keyring
+    credentials::delete_credentials(&credential_builder, mastodon_server.as_deref(), bluesky_username.as_deref());
+
+    // Clear config values
+    config.mutate(|mut data| {
+        data.bluesky_username = None;
+        data.mastodon_server = None;
+        data
+    })?;
+
+    println!("Credentials cleared");
 
     Ok(())
 }
