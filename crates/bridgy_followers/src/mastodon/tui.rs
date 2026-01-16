@@ -1,5 +1,5 @@
 use color_eyre::{Result, eyre::WrapErr, eyre::eyre};
-use dialoguer::Input;
+use dialoguer::{Input, Password, theme::ColorfulTheme};
 
 use keyring::CredentialBuilder;
 use megalodon::{Megalodon, mastodon::Mastodon, megalodon::AppInputOptions};
@@ -17,7 +17,7 @@ fn get_server(config: &mut Config) -> Result<String> {
     if let Some(server) = config.mastodon_server() {
         Ok(server.to_string())
     } else {
-        let input: String = Input::new()
+        let input: String = Input::with_theme(&ColorfulTheme::default())
             .with_prompt("Mastodon server (e.g., mastodon.social or https://hachyderm.io)")
             .interact_text()?;
 
@@ -64,9 +64,9 @@ async fn register_application(server_url: String) -> Result<String> {
         authorize_url
     );
 
-    let auth_code: String = Input::new()
+    let auth_code: String = Password::with_theme(&ColorfulTheme::default())
         .with_prompt("Enter the authorization code")
-        .interact_text()?;
+        .interact()?;
 
     println!("Getting access token...");
     let token_data = client

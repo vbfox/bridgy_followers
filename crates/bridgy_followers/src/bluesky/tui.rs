@@ -12,7 +12,7 @@ fn get_username(config: &mut Config) -> Result<String> {
     if let Some(server) = config.bluesky_username() {
         Ok(server.to_string())
     } else {
-        let input: String = Input::new()
+        let input: String = Input::with_theme(&ColorfulTheme::default())
             .with_prompt("Bluesky username (e.g., user.bsky.social)")
             .interact_text()?;
 
