@@ -1,47 +1,67 @@
 use color_eyre::Result;
 use serde::{Deserialize, Serialize};
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
-#[derive(Debug, Deserialize)]
-pub struct Config {
-    pub username: String,
-    pub password: String,
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct ConfigData {
+    pub bluesky_username: Option<String>,
     #[serde(default)]
     pub ignored_accounts: Vec<String>,
     pub mastodon_server: Option<String>,
 }
 
+impl Default for ConfigData {
+    fn default() -> Self {
+        ConfigData {
+            bluesky_username: None,
+            ignored_accounts: Vec::new(),
+            mastodon_server: None,
+        }
+    }
+}
+
+pub struct Config {
+    data: ConfigData,
+    path: PathBuf,
+}
+
 impl Config {
-    pub fn from_file(path: &Path) -> Result<Self> {
-        let contents = std::fs::read_to_string(path)?;
-        let config: Config = toml::from_str(&contents)?;
-        Ok(config)
+    pub fn mastodon_server(&self) -> Option<&str> {
+        self.data.mastodon_server.as_deref()
     }
 
-    pub fn save_to_file(&self, path: &Path) -> Result<()> {
-        // Read existing file and parse to preserve structure
-        let contents = std::fs::read_to_string(path)?;
-        let mut doc: toml::Value = toml::from_str(&contents)?;
+    pub fn bluesky_username(&self) -> Option<&str> {
+        self.data.bluesky_username.as_deref()
+    }
 
-        // Update mastodon section if present
-        if let Some(mastodon) = &self.mastodon_server {
-            let mut mastodon_table = toml::map::Map::new();
-            mastodon_table.insert(
-                "server".to_string(),
-                toml::Value::String(mastodon.server.clone()),
-            );
-            mastodon_table.insert(
-                "access_token".to_string(),
-                toml::Value::String(mastodon.access_token.clone()),
-            );
+    pub fn ignored_accounts(&self) -> &Vec<String> {
+        &self.data.ignored_accounts
+    }
 
-            if let toml::Value::Table(ref mut table) = doc {
-                table.insert("mastodon".to_string(), toml::Value::Table(mastodon_table));
+    /// Load the configuration from a file
+    pub fn from_file(path: &Path) -> Result<Self> {
+        let data = match std::fs::read_to_string(path) {
+            Ok(contents) => {
+                let data: ConfigData = toml::from_str(&contents)?;
+                data
             }
-        }
+            Err(e) if e.kind() == std::io::ErrorKind::NotFound => ConfigData::default(),
+            Err(e) => {
+                return Err(e.into());
+            }
+        };
+        Ok(Config {
+            data,
+            path: path.to_path_buf(),
+        })
+    }
 
-        let contents = toml::to_string_pretty(&doc)?;
-        std::fs::write(path, contents)?;
+    /// Save a new configuration to the configuration file
+    pub fn mutate(&mut self, mutation: impl Fn(ConfigData) -> ConfigData) -> Result<()> {
+        let new_data = mutation(self.data.clone());
+        let toml_string = toml::to_string_pretty(&new_data)?;
+        self.data = new_data;
+        std::fs::write(&self.path, toml_string)?;
         Ok(())
     }
 }

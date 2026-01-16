@@ -1,21 +1,15 @@
-use atrium_api::agent::atp_agent::{AtpAgent, store::MemorySessionStore};
-use atrium_xrpc_client::reqwest::ReqwestClient;
+use crate::bluesky::get_known_bridgy_followers;
+use crate::config::Config;
 use clap::Parser;
 use color_eyre::Result;
-use keyring::CredentialBuilder;
 use std::fs::File;
 use std::io::{self, Write};
 use std::path::PathBuf;
 
-use bsky::{get_known_followers, resolve_handle};
-
-use crate::bsky::BskyAgent;
-use crate::config::Config;
-
-mod bsky;
+mod bluesky;
 mod config;
-mod mastodon;
 mod credentials;
+mod mastodon;
 
 #[derive(Parser)]
 #[command(name = "bridgy_followers")]
@@ -38,32 +32,12 @@ async fn main() -> Result<()> {
     let cli = Cli::parse();
     let mut config = Config::from_file(&cli.config)?;
 
-    let credentials = keyring::default::default_credential_builder();
+    let credential_builder = keyring::default::default_credential_builder();
+    let mastodon = mastodon::authenticate(&credential_builder, &mut config).await?;
+    let bluesky = bluesky::authenticate(&credential_builder, &mut config).await?;
+    let mastodon_following = mastodon::get_following(&mastodon).await?;
 
-    // Check if Mastodon authentication exists, if not, authenticate
-    let (mastodon_config, mastodon_token) = match &config.mastodon {
-       Some(cfg) => {
-            println!("Using saved Mastodon authentication for {}", cfg.server);
-            let mastodon_token_credential = mastodon::get_access_token(&credentials)?;
-            (cfg.clone(), token)
-        }
-        _ => {
-            println!("No saved Mastodon authentication found. Let's authenticate!\n");
-            let mastodon_cfg = mastodon::authenticate().await?;
-            config.mastodon = Some(mastodon_cfg.clone());
-            config.save_to_file(&cli.config)?;
-            println!("Mastodon credentials saved to config file.\n");
-            mastodon_cfg
-        }
-    };
-
-    // Get Mastodon following list
-    let mastodon_following = mastodon::get_following(&mastodon_config).await?;
-
-    let agent = create_authenticated_agent(&config).await?;
-
-    let bridgy_did = resolve_handle(&agent, "ap.brid.gy").await?;
-    let bridgy_followers = get_known_followers(&agent, &bridgy_did).await?;
+    let bridgy_followers = get_known_bridgy_followers(&bluesky, &config.ignored_accounts()).await?;
 
     // Open output destination
     let mut output: Box<dyn Write> = match cli.output {
@@ -82,15 +56,6 @@ async fn main() -> Result<()> {
     // For each user in intersection, get their handle and display Mastodon equivalent
     for follower in bridgy_followers.values() {
         let handle = follower.handle.as_str();
-
-        // Skip ignored accounts
-        if config
-            .ignored_accounts
-            .iter()
-            .any(|ignored| ignored == handle)
-        {
-            continue;
-        }
 
         total_count += 1;
 
@@ -113,15 +78,4 @@ async fn main() -> Result<()> {
     eprintln!("New accounts to follow: {}", total_count - filtered_count);
 
     Ok(())
-}
-
-async fn create_authenticated_agent(config: &Config) -> Result<BskyAgent> {
-    let agent = AtpAgent::new(
-        ReqwestClient::new("https://bsky.social"),
-        MemorySessionStore::default(),
-    );
-
-    agent.login(&config.username, &config.password).await?;
-
-    Ok(agent)
 }
