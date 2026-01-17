@@ -1,7 +1,16 @@
 use atrium_api::{
     agent::atp_agent::{AtpAgent, store::MemorySessionStore},
-    app::bsky::actor::defs::ProfileViewData,
-    types::{Object, string::Did},
+    app::bsky::{
+        actor::defs::ProfileViewData,
+        graph::{
+            defs::Relationship,
+            get_relationships::{self, OutputRelationshipsItem},
+        },
+    },
+    types::{
+        Object, Union,
+        string::{AtIdentifier, Did},
+    },
 };
 use atrium_xrpc_client::reqwest::ReqwestClient;
 use color_eyre::{Result, eyre::eyre};
@@ -94,17 +103,38 @@ pub async fn get_known_followers(
     Ok(all_followers)
 }
 
-pub async fn get_known_bridgy_followers(
-    agent: &BlueskyAgent,
-    ignored_accounts: &Vec<String>,
-) -> Result<HashMap<Did, Object<ProfileViewData>>> {
-    let bridgy_did = get_bridgy_did(&agent).await?;
-    let mut bridgy_followers = get_known_followers(&agent, &bridgy_did).await?;
+pub async fn get_relationships(
+    bluesky: &BlueskyAgent,
+    actor: AtIdentifier,
+    others: impl IntoIterator<Item = AtIdentifier>,
+) -> Result<HashMap<Did, Box<Relationship>>> {
+    // The API has a limit on how many 'others' can be queried at once (30), so we chunk them
+    let all_others = others.into_iter().collect::<Vec<_>>();
+    let chunks = all_others.chunks(30);
 
-    bridgy_followers.retain(|_, profile| {
-        let handle = profile.handle.as_str();
-        let ignored = ignored_accounts.iter().any(|ignored| ignored == handle);
-        !ignored
-    });
-    Ok(bridgy_followers)
+    let mut result = HashMap::new();
+    for chunk in chunks {
+        let params = get_relationships::ParametersData {
+            actor: actor.clone(),
+            others: chunk.iter().map(|f| Some(f.clone())).collect(),
+        };
+
+        let relationships = bluesky
+            .api
+            .app
+            .bsky
+            .graph
+            .get_relationships(params.into())
+            .await?;
+
+        for rel in relationships.data.relationships {
+            let Union::Refs(OutputRelationshipsItem::AppBskyGraphDefsRelationship(rel)) = rel
+            else {
+                continue;
+            };
+            result.insert(rel.did.clone(), rel);
+        }
+    }
+
+    Ok(result)
 }

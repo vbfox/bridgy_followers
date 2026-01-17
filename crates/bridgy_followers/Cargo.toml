@@ -17,6 +17,7 @@ color-eyre.workspace = true
 csv.workspace = true
 dialoguer.workspace = true
 dirs.workspace = true
+ipld-core.workspace = true
 keyring.workspace = true
 megalodon.workspace = true
 serde_json.workspace = true
