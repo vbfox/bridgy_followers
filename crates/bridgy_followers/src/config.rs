@@ -2,22 +2,12 @@ use color_eyre::Result;
 use serde::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct ConfigData {
     pub bluesky_username: Option<String>,
     #[serde(default)]
     pub ignored_accounts: Vec<String>,
     pub mastodon_server: Option<String>,
-}
-
-impl Default for ConfigData {
-    fn default() -> Self {
-        ConfigData {
-            bluesky_username: None,
-            ignored_accounts: Vec::new(),
-            mastodon_server: None,
-        }
-    }
 }
 
 pub struct Config {

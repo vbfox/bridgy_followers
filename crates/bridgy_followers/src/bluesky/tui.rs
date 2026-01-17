@@ -27,7 +27,7 @@ fn get_username(config: &mut Config) -> Result<String> {
 /// Get the Bluesky password from the credential store or prompt if not set
 fn get_password(credential_builder: &Box<CredentialBuilder>, username: &str) -> Result<String> {
     // TODO: We should use OAuth now that it's available in bluesky
-    let credentials = credentials::get_bluesky_password(credential_builder, &username)?;
+    let credentials = credentials::get_bluesky_password(credential_builder, username)?;
 
     match credentials.get_password() {
         Ok(password) => Ok(password),

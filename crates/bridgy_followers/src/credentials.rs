@@ -27,16 +27,16 @@ pub fn delete_credentials(
     bluesky_username: Option<&str>,
 ) {
     // Delete Mastodon credential if server is known
-    if let Some(server) = mastodon_server {
-        if let Ok(credential) = get_mastodon_access_token(credential_builder, server) {
-            let _ = credential.delete_credential();
-        }
+    if let Some(server) = mastodon_server
+        && let Ok(credential) = get_mastodon_access_token(credential_builder, server)
+    {
+        let _ = credential.delete_credential();
     }
 
     // Delete Bluesky credential if username is known
-    if let Some(username) = bluesky_username {
-        if let Ok(credential) = get_bluesky_password(credential_builder, username) {
-            let _ = credential.delete_credential();
-        }
+    if let Some(username) = bluesky_username
+        && let Ok(credential) = get_bluesky_password(credential_builder, username)
+    {
+        let _ = credential.delete_credential();
     }
 }

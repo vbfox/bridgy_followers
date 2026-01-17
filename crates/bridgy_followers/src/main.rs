@@ -1,3 +1,5 @@
+#![allow(clippy::borrowed_box, reason = "Trigger on &Box<dyn Trait> parameters")]
+
 use crate::bluesky::{get_bridgy_did, get_known_followers, get_relationships};
 use crate::config::Config;
 use atrium_api::types::string::Handle;
@@ -94,7 +96,7 @@ async fn sync_command(config_path: PathBuf, output_path: Option<PathBuf>) -> Res
                 return false;
             }
 
-            return true;
+            true
         })
         .collect();
 
@@ -121,8 +123,8 @@ async fn sync_command(config_path: PathBuf, output_path: Option<PathBuf>) -> Res
                         .clone()
                         .try_into()
                         .unwrap_or_default();
-                    let blocks_bridge = extra_data.get("blockedBy").is_some()
-                        || extra_data.get("blockedByList").is_some();
+                    let blocks_bridge = extra_data.contains_key("blockedBy")
+                        || extra_data.contains_key("blockedByList");
                     if blocks_bridge {
                         println!(
                             "Skipping {} as they block the bridge",
@@ -136,7 +138,7 @@ async fn sync_command(config_path: PathBuf, output_path: Option<PathBuf>) -> Res
                     // - '@terribletoybox.com@bsky.brid.gy' follows both way but is not bridged
                     // - '@pwnallthethings.bsky.social@bsky.brid.gy' same
 
-                    return true;
+                    true
                 }
             }
         })

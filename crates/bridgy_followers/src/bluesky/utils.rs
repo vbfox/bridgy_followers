@@ -59,7 +59,7 @@ pub async fn resolve_handle(agent: &BlueskyAgent, handle: &str) -> Result<Did> {
 }
 
 pub async fn get_bridgy_did(agent: &BlueskyAgent) -> Result<Did> {
-    resolve_handle(&agent, BRIDGY_HANDLE).await
+    resolve_handle(agent, BRIDGY_HANDLE).await
 }
 
 /// Enumerates accounts which follow a specified account (actor) and are followed by the viewer.
