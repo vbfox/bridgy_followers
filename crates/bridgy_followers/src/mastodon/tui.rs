@@ -24,7 +24,7 @@ fn get_server(config: &mut Config) -> Result<String> {
         let server = if input.starts_with("http") {
             input.clone()
         } else {
-            format!("https://{}", input)
+            format!("https://{input}")
         };
         config.mutate(|data| ConfigData {
             mastodon_server: Some(server.clone()),
@@ -36,7 +36,7 @@ fn get_server(config: &mut Config) -> Result<String> {
 
 async fn register_application(server_url: String) -> Result<String> {
     println!("Registering application...");
-    let client = create_client(server_url.clone(), None)?;
+    let client = create_client(&server_url, None)?;
     let app_data = client
         .register_app(
             String::from("Bridgy Followers"),
@@ -60,8 +60,7 @@ async fn register_application(server_url: String) -> Result<String> {
     });
 
     println!(
-        "\nPlease open this URL in your browser:\n{}\n",
-        authorize_url
+        "\nPlease open this URL in your browser:\n{authorize_url}\n"
     );
 
     let auth_code: String = Password::with_theme(&ColorfulTheme::default())
@@ -94,16 +93,13 @@ pub async fn authenticate(
 
     let credentials = credentials::get_mastodon_access_token(credential_builder, &server_url)?;
 
-    let access_token = match credentials.get_password() {
-        Ok(token) => token,
-        Err(_) => {
-            let token = register_application(server_url.clone()).await?;
-            credentials.set_password(&token)?;
-            token
-        }
+    let access_token = if let Ok(token) = credentials.get_password() { token } else {
+        let token = register_application(server_url.clone()).await?;
+        credentials.set_password(&token)?;
+        token
     };
 
-    let client = create_client(server_url, Some(access_token))?;
+    let client = create_client(&server_url, Some(access_token))?;
 
     // TODO: We should use verify_account_credentials here to ensure the token is valid and prompt for
     // re-authentication or server-change if not.

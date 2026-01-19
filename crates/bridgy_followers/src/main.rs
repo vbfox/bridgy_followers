@@ -9,7 +9,7 @@ use ipld_core::ipld::Ipld;
 use std::collections::BTreeMap;
 use std::fs::File;
 use std::io::{self, Write};
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 mod bluesky;
 mod config;
@@ -56,7 +56,7 @@ async fn main() -> Result<()> {
 
     match cli.command {
         Command::Sync { config, output } => sync_command(config, output).await,
-        Command::Forget { config } => forget_command(config).await,
+        Command::Forget { config } => forget_command(&config),
     }
 }
 
@@ -156,7 +156,7 @@ async fn sync_command(config_path: PathBuf, output_path: Option<PathBuf>) -> Res
     )?;
 
     // For each user in intersection, get their handle and display Mastodon equivalent
-    for follower in new_follows.iter() {
+    for follower in &new_follows {
         let mastodon_handle = bluesky_handle_to_mastodon(&follower.handle);
         writeln!(output, "@{mastodon_handle},true,false,")?;
     }
@@ -164,14 +164,14 @@ async fn sync_command(config_path: PathBuf, output_path: Option<PathBuf>) -> Res
     Ok(())
 }
 
-async fn forget_command(config_path: PathBuf) -> Result<()> {
-    let mut config = Config::from_file(&config_path)?;
+fn forget_command(config_path: &Path) -> Result<()> {
+    let mut config = Config::from_file(config_path)?;
 
     let credential_builder = keyring::default::default_credential_builder();
 
     // Get current values before clearing
-    let bluesky_username = config.bluesky_username().map(|s| s.to_string());
-    let mastodon_server = config.mastodon_server().map(|s| s.to_string());
+    let bluesky_username = config.bluesky_username().map(ToString::to_string);
+    let mastodon_server = config.mastodon_server().map(ToString::to_string);
 
     // Delete credentials from keyring
     credentials::delete_credentials(
