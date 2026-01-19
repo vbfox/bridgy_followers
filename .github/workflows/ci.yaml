@@ -6,6 +6,8 @@ on:
 
 env:
   CARGO_TERM_COLOR: always
+  # We currently build megalodon using path.crates.io dependency and it generate dead code warnings.
+  RUSTFLAGS: "-D warnings -A dead_code"
 
 jobs:
   ci:
