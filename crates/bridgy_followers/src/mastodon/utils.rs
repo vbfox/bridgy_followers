@@ -6,8 +6,12 @@ use megalodon::{
 const USER_AGENT: &str = "bridgy_followers";
 
 pub fn create_client(base_url: &str, access_token: Option<String>) -> Result<Mastodon> {
-    Mastodon::new(base_url.to_string(), access_token, Some(USER_AGENT.to_string()))
-        .wrap_err_with(|| format!("Failed to create Mastodon client at {base_url}"))
+    Mastodon::new(
+        base_url.to_string(),
+        access_token,
+        Some(USER_AGENT.to_string()),
+    )
+    .wrap_err_with(|| format!("Failed to create Mastodon client at {base_url}"))
 }
 
 /// Get all accounts which the given acount is following.

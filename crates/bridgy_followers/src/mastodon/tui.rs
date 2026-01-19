@@ -59,9 +59,7 @@ async fn register_application(server_url: String) -> Result<String> {
         )
     });
 
-    println!(
-        "\nPlease open this URL in your browser:\n{authorize_url}\n"
-    );
+    println!("\nPlease open this URL in your browser:\n{authorize_url}\n");
 
     let auth_code: String = Password::with_theme(&ColorfulTheme::default())
         .with_prompt("Enter the authorization code")
@@ -93,7 +91,9 @@ pub async fn authenticate(
 
     let credentials = credentials::get_mastodon_access_token(credential_builder, &server_url)?;
 
-    let access_token = if let Ok(token) = credentials.get_password() { token } else {
+    let access_token = if let Ok(token) = credentials.get_password() {
+        token
+    } else {
         let token = register_application(server_url.clone()).await?;
         credentials.set_password(&token)?;
         token
