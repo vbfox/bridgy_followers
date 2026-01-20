@@ -1,4 +1,5 @@
 use keyring::{Credential, CredentialBuilder};
+use tracing::{debug, info};
 
 /// Get the Keyring credential for storing/retrieving the Bluesky password
 pub fn get_bluesky_password(
@@ -30,13 +31,29 @@ pub fn delete_credentials(
     if let Some(server) = mastodon_server
         && let Ok(credential) = get_mastodon_access_token(credential_builder, server)
     {
-        let _ = credential.delete_credential();
+        match credential.delete_credential() {
+            Ok(_) => info!("Deleted Mastodon credentials for server '{server}'"),
+            Err(e) => {
+                if let keyring::Error::NoEntry = e {
+                    debug!("No Mastodon credentials found for server '{server}'");
+                }
+                eprintln!("Failed to delete Mastodon credentials for server '{server}': {e}");
+            }
+        }
     }
 
     // Delete Bluesky credential if username is known
     if let Some(username) = bluesky_username
         && let Ok(credential) = get_bluesky_password(credential_builder, username)
     {
-        let _ = credential.delete_credential();
+        match credential.delete_credential() {
+            Ok(_) => info!("Deleted Bluesky credentials for username '{username}'"),
+            Err(e) => {
+                if let keyring::Error::NoEntry = e {
+                    debug!("No Bluesky credentials found for username '{username}'");
+                }
+                eprintln!("Failed to delete Bluesky credentials for username '{username}': {e}");
+            }
+        }
     }
 }

@@ -9,6 +9,7 @@ use std::collections::BTreeMap;
 use std::fs::File;
 use std::io::{self, Write};
 use std::path::{Path, PathBuf};
+use tracing::info;
 
 pub async fn sync_command(config_path: PathBuf, output_path: Option<PathBuf>) -> Result<()> {
     let mut config = Config::from_file(&config_path)?;
@@ -39,7 +40,12 @@ pub async fn sync_command(config_path: PathBuf, output_path: Option<PathBuf>) ->
             let mastodon_handle = bluesky_handle_to_mastodon(&follower.handle).to_lowercase();
             let already_following = mastodon_following.contains(&mastodon_handle);
             if already_following {
-                // return false;
+                info!(
+                    did = follower.did.as_str(),
+                    "User '{}' already followed on Mastodon as {mastodon_handle}, filtering",
+                    follower.handle.as_str()
+                );
+                return false;
             }
 
             true
@@ -83,6 +89,13 @@ pub async fn sync_command(config_path: PathBuf, output_path: Option<PathBuf>) ->
                     );
 
                     if blocks_bridge {
+                        info!(
+                            ?followed_by_bridge,
+                            ?blocks_bridge,
+                            did = follow.did.as_str(),
+                            "User '{}' blocks the bridge, filtering",
+                            follow.handle.as_str()
+                        );
                         return false;
                     }
 
@@ -91,6 +104,13 @@ pub async fn sync_command(config_path: PathBuf, output_path: Option<PathBuf>) ->
                     // - '@terribletoybox.com@bsky.brid.gy' follows both way but is not bridged
                     // - '@pwnallthethings.bsky.social@bsky.brid.gy' same
 
+                    info!(
+                        ?followed_by_bridge,
+                        ?blocks_bridge,
+                        did = follow.did.as_str(),
+                        "Need to add new user '{}'",
+                        follow.handle.as_str()
+                    );
                     true
                 }
             }

@@ -11,6 +11,7 @@ mod commands;
 mod config;
 mod credentials;
 mod mastodon;
+mod tracing;
 mod utils;
 
 #[tokio::main]
@@ -18,9 +19,10 @@ async fn main() -> Result<()> {
     color_eyre::install()?;
 
     let cli = CliArgs::parse();
+    tracing::init_tracing(cli.command.verbose());
 
     match cli.command {
-        Command::Sync { config, output } => sync_command(config, output).await,
-        Command::Forget { config } => forget_command(&config),
+        Command::Sync { config, output, .. } => sync_command(config, output).await,
+        Command::Forget { config, .. } => forget_command(&config),
     }
 }
