@@ -34,6 +34,11 @@ pub async fn sync_command(config_path: PathBuf, output_path: Option<PathBuf>) ->
                 .iter()
                 .any(|handle| handle == follower.handle.as_str());
             if ignored {
+                info!(
+                    did = follower.did.as_str(),
+                    "User '{}' in ignore list, filtering out",
+                    follower.handle.as_str()
+                );
                 return false;
             }
 
@@ -42,7 +47,7 @@ pub async fn sync_command(config_path: PathBuf, output_path: Option<PathBuf>) ->
             if already_following {
                 info!(
                     did = follower.did.as_str(),
-                    "User '{}' already followed on Mastodon as {mastodon_handle}, filtering",
+                    "User '{}' already followed on Mastodon as {mastodon_handle}, filtering out",
                     follower.handle.as_str()
                 );
                 return false;

@@ -2,6 +2,7 @@ use color_eyre::{Result, eyre::WrapErr};
 use megalodon::{
     Megalodon, entities::Account, mastodon::Mastodon, megalodon::AccountFollowersInputOptions,
 };
+use tracing::{info, instrument};
 
 const USER_AGENT: &str = "bridgy_followers";
 
@@ -15,6 +16,7 @@ pub fn create_client(base_url: &str, access_token: Option<String>) -> Result<Mas
 }
 
 /// Get all accounts which the given acount is following.
+#[instrument(skip(client))]
 pub async fn get_account_following(client: &Mastodon, user_id: String) -> Result<Vec<Account>> {
     let mut following = Vec::new();
 
@@ -50,5 +52,6 @@ pub async fn get_account_following(client: &Mastodon, user_id: String) -> Result
         }
     }
 
+    info!("Fetched {} following accounts", following.len());
     Ok(following)
 }

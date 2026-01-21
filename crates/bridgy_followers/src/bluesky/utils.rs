@@ -14,6 +14,7 @@ use atrium_api::{
 };
 use atrium_xrpc_client::reqwest::ReqwestClient;
 use color_eyre::{Result, eyre::eyre};
+use tracing::instrument;
 use std::collections::HashMap;
 
 pub type BlueskyAgent = AtpAgent<MemorySessionStore, ReqwestClient>;
@@ -32,6 +33,7 @@ pub async fn create_agent(username: &str, password: &str) -> Result<BlueskyAgent
 }
 
 /// Resolve a Bluesky handle or DID to a DID
+#[instrument(skip(agent))]
 pub async fn resolve_handle(agent: &BlueskyAgent, handle: &str) -> Result<Did> {
     use atrium_api::com::atproto::identity::resolve_handle;
 
@@ -63,6 +65,7 @@ pub async fn get_bridgy_did(agent: &BlueskyAgent) -> Result<Did> {
 }
 
 /// Enumerates accounts which follow a specified account (actor) and are followed by the viewer.
+#[instrument(skip(agent))]
 pub async fn get_known_followers(
     agent: &BlueskyAgent,
     did: &Did,
@@ -103,6 +106,7 @@ pub async fn get_known_followers(
     Ok(all_followers)
 }
 
+#[instrument(skip(bluesky, actor, others))]
 pub async fn get_relationships(
     bluesky: &BlueskyAgent,
     actor: AtIdentifier,
