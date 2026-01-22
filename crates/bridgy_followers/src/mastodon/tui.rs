@@ -1,4 +1,8 @@
-use color_eyre::{Result, eyre::WrapErr, eyre::eyre};
+use color_eyre::{
+    Result,
+    eyre::{WrapErr, eyre},
+    owo_colors::OwoColorize,
+};
 use dialoguer::{Input, Password, theme::ColorfulTheme};
 
 use keyring::CredentialBuilder;
@@ -109,18 +113,22 @@ pub async fn authenticate(
 
 pub async fn get_following(client: &Mastodon) -> Result<HashSet<String>> {
     println!("Fetching current user...");
-    let account = client
+
+    let account_response = client
         .verify_account_credentials()
         .await
         .map_err(|e| eyre!("Failed to verify credentials: {}", e))?;
-    let user_id = account.json().id;
+    let account = account_response.json();
+    println!(
+        "Fetching {} following list from Mastodon...",
+        format!("@{}", &account.acct).blue()
+    );
 
-    println!("Fetching following list from Mastodon...");
+    let user_id = account.id;
     let following = get_account_following(client, user_id).await?;
-
     println!(
         "Found {} accounts you're following on Mastodon",
-        following.len()
+        following.len().yellow()
     );
 
     let following: HashSet<String> = following.into_iter().map(|account| account.acct).collect();

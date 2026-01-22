@@ -14,8 +14,8 @@ use atrium_api::{
 };
 use atrium_xrpc_client::reqwest::ReqwestClient;
 use color_eyre::{Result, eyre::eyre};
-use tracing::instrument;
 use std::collections::HashMap;
+use tracing::instrument;
 
 pub type BlueskyAgent = AtpAgent<MemorySessionStore, ReqwestClient>;
 

@@ -1,9 +1,8 @@
 use crate::bluesky::{self, get_bridgy_did, get_known_followers, get_relationships};
 use crate::config::Config;
-use crate::utils::{bluesky_handle_to_mastodon, color_bool};
+use crate::utils::bluesky_handle_to_mastodon;
 use crate::{credentials, mastodon};
 use color_eyre::Result;
-use color_eyre::owo_colors::OwoColorize;
 use ipld_core::ipld::Ipld;
 use std::collections::BTreeMap;
 use std::fs::File;
@@ -84,14 +83,6 @@ pub async fn sync_command(config_path: PathBuf, output_path: Option<PathBuf>) ->
                         || extra_data.contains_key("blockedByList");
 
                     let followed_by_bridge = relationship.followed_by.is_some();
-
-                    println!(
-                        "{} followed by bridge: {}, blocks bridge: {} (did: {})",
-                        follow.handle.as_str().blue(),
-                        color_bool(followed_by_bridge),
-                        color_bool(blocks_bridge),
-                        follow.did.as_str().dimmed()
-                    );
 
                     if blocks_bridge {
                         info!(
