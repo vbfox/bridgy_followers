@@ -36,8 +36,7 @@ pub enum Command {
 impl Command {
     pub fn verbose(&self) -> u8 {
         match self {
-            Command::Sync { verbose, .. } => *verbose,
-            Command::Forget { verbose, .. } => *verbose,
+            Command::Sync { verbose, .. } | Command::Forget { verbose, .. } => *verbose,
         }
     }
 }

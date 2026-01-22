@@ -32,7 +32,7 @@ pub fn delete_credentials(
         && let Ok(credential) = get_mastodon_access_token(credential_builder, server)
     {
         match credential.delete_credential() {
-            Ok(_) => info!("Deleted Mastodon credentials for server '{server}'"),
+            Ok(()) => info!("Deleted Mastodon credentials for server '{server}'"),
             Err(e) => {
                 if let keyring::Error::NoEntry = e {
                     debug!("No Mastodon credentials found for server '{server}'");
@@ -47,7 +47,7 @@ pub fn delete_credentials(
         && let Ok(credential) = get_bluesky_password(credential_builder, username)
     {
         match credential.delete_credential() {
-            Ok(_) => info!("Deleted Bluesky credentials for username '{username}'"),
+            Ok(()) => info!("Deleted Bluesky credentials for username '{username}'"),
             Err(e) => {
                 if let keyring::Error::NoEntry = e {
                     debug!("No Bluesky credentials found for username '{username}'");
