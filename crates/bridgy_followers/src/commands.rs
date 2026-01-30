@@ -13,13 +13,11 @@ pub async fn sync_command(config_path: PathBuf, _output_path: Option<PathBuf>) -
 
     let credential_builder = keyring::default::default_credential_builder();
 
-    // Query the Mastodon user follows
     let mastodon_user = mastodon::authenticate(&credential_builder, &mut config).await?;
     let bluesky = bluesky::authenticate(&credential_builder, &mut config).await?;
     let statuses =
         get_follower_statuses(&mastodon_user, &bluesky, config.ignored_accounts(), false).await?;
 
-    // Filter for accounts ready to follow
     let ready_to_follow: Vec<_> = statuses
         .iter()
         .filter(|s| s.status == FollowerStatus::ReadyToFollow)
@@ -75,7 +73,6 @@ pub async fn csv_command(config_path: PathBuf, output_path: Option<PathBuf>) -> 
 
     let credential_builder = keyring::default::default_credential_builder();
 
-    // Query the Mastodon user follows
     let mastodon_user = mastodon::authenticate(&credential_builder, &mut config).await?;
     let bluesky = bluesky::authenticate(&credential_builder, &mut config).await?;
     let statuses =
