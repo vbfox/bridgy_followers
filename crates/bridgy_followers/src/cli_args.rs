@@ -44,8 +44,23 @@ pub enum Command {
         #[arg(short, long, action = clap::ArgAction::Count)]
         verbose: u8,
     },
-    /// Manage ignored accounts interactively
+    /// Manage ignored accounts
     Ignores {
+        #[command(subcommand)]
+        command: IgnoresCommand,
+    },
+    // Get the default config path
+    Config {
+        /// Increase verbosity level.
+        #[arg(short, long, action = clap::ArgAction::Count)]
+        verbose: u8,
+    },
+}
+
+#[derive(Parser)]
+pub enum IgnoresCommand {
+    /// List and remove ignored accounts interactively
+    List {
         /// Path to configuration file
         #[arg(default_value_os_t = default_config_path())]
         config: PathBuf,
@@ -54,8 +69,11 @@ pub enum Command {
         #[arg(short, long, action = clap::ArgAction::Count)]
         verbose: u8,
     },
-    // Get the default config path
-    Config {
+    /// Add account(s) to ignore list
+    Add {
+        /// Account handle to ignore (e.g., user.bsky.social). If not provided, shows interactive selection.
+        account: Option<String>,
+
         /// Increase verbosity level.
         #[arg(short, long, action = clap::ArgAction::Count)]
         verbose: u8,
@@ -68,8 +86,16 @@ impl Command {
             Command::Sync { verbose, .. }
             | Command::Forget { verbose, .. }
             | Command::Csv { verbose, .. }
-            | Command::Ignores { verbose, .. }
             | Command::Config { verbose, .. } => *verbose,
+            Command::Ignores { command } => command.verbose(),
+        }
+    }
+}
+
+impl IgnoresCommand {
+    pub fn verbose(&self) -> u8 {
+        match self {
+            IgnoresCommand::List { verbose, .. } | IgnoresCommand::Add { verbose, .. } => *verbose,
         }
     }
 }

@@ -36,7 +36,8 @@ bridgy_followers <COMMAND>
 
 - `sync` - Sync followers from Bluesky to Mastodon (automatically follows new bridged accounts)
 - `csv` - Generate a CSV file that can be manually imported into Mastodon
-- `ignores` - Manage ignored accounts interactively with a TUI
+- `ignores list` - List and remove ignored accounts interactively
+- `ignores add` - Add accounts to the ignore list (interactively or directly)
 - `forget` - Clear stored credentials and configuration
 - `config` - Show the default configuration file path
 
@@ -61,17 +62,27 @@ bridgy_followers csv [config_file] [-o OUTPUT]
 - `[config_file]` - Optional path to custom configuration file (defaults to platform-dependent location)
 - `-o, --output <FILE>` - Write output to a file instead of stdout
 
-### Ignores command
+### Ignores commands
 
-Interactively manage ignored accounts with a TUI:
+#### List and remove ignored accounts
 
 ```sh
-bridgy_followers ignores [config_file]
+bridgy_followers ignores list [config_file]
 ```
 
 - `[config_file]` - Optional path to custom configuration file (defaults to platform-dependent location)
 
-This command displays a list of all currently ignored accounts. Use the space bar to select accounts to remove from the ignore list, then press Enter to confirm.
+Displays a list of all currently ignored accounts. Use the space bar to select accounts to remove from the ignore list, then press Enter to confirm.
+
+#### Add accounts to ignore list
+
+```sh
+bridgy_followers ignores add [account]
+```
+
+- `[account]` - Optional account handle (e.g., `user.bsky.social`)
+
+If an account handle is provided, adds it directly to the ignore list. If no handle is provided, shows an interactive selection of all available accounts (fetches from Bluesky and Mastodon).
 
 ### Examples
 
@@ -87,10 +98,22 @@ Generate CSV for manual import:
 bridgy_followers csv -o followers.csv
 ```
 
-Manage ignored accounts interactively:
+List and manage ignored accounts:
 
 ```sh
-bridgy_followers ignores
+bridgy_followers ignores list
+```
+
+Add a specific account to ignore list:
+
+```sh
+bridgy_followers ignores add user.bsky.social
+```
+
+Interactively select accounts to ignore:
+
+```sh
+bridgy_followers ignores add
 ```
 
 Use a custom configuration file:

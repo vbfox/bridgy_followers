@@ -124,7 +124,7 @@ pub fn config_command() -> Result<()> {
     Ok(())
 }
 
-pub fn ignores_command(config_path: &Path) -> Result<()> {
+pub fn ignores_list_command(config_path: &Path) -> Result<()> {
     let mut config = Config::from_file(config_path)?;
 
     let ignored_accounts = config.ignored_accounts().clone();
@@ -170,6 +170,93 @@ pub fn ignores_command(config_path: &Path) -> Result<()> {
     );
     for account in &accounts_to_remove {
         println!("  - {}", account.dimmed());
+    }
+
+    Ok(())
+}
+
+pub async fn ignores_add_command(account: Option<String>) -> Result<()> {
+    let config_path = default_config_path()?;
+    let mut config = Config::from_file(&config_path)?;
+
+    if let Some(account_handle) = account {
+        // Direct add mode
+        if config.ignored_accounts().contains(&account_handle) {
+            println!(
+                "{} Account '{}' is already in the ignore list",
+                "ℹ".blue(),
+                account_handle
+            );
+            return Ok(());
+        }
+
+        config.mutate(|mut data| {
+            data.ignored_accounts.push(account_handle.clone());
+            data
+        })?;
+
+        println!("{} Added '{}' to ignore list", "✓".green(), account_handle);
+    } else {
+        // Interactive mode - query followers and let user select
+        let credential_builder = keyring::default::default_credential_builder();
+
+        let mastodon_user = mastodon::authenticate(&credential_builder, &mut config).await?;
+        let bluesky = bluesky::authenticate(&credential_builder, &mut config).await?;
+
+        println!("Fetching followers...");
+        let statuses =
+            get_follower_statuses(&mastodon_user, &bluesky, config.ignored_accounts(), false)
+                .await?;
+
+        // Get all accounts that could be followed (not already ignored, not already followed)
+        let available_accounts: Vec<String> = statuses
+            .iter()
+            .filter(|s| matches!(s.status, FollowerStatus::ReadyToFollow))
+            .map(|s| s.handle.to_string())
+            .collect();
+
+        if available_accounts.is_empty() {
+            println!("{}", "No accounts available to ignore.".yellow());
+            return Ok(());
+        }
+
+        println!();
+        println!("Select accounts to add to ignore list:");
+        println!("{}", "(Space to select, Enter to confirm)".dimmed());
+        println!();
+
+        let selections = MultiSelect::with_theme(&ColorfulTheme::default())
+            .items(&available_accounts)
+            .interact()?;
+
+        if selections.is_empty() {
+            println!("{}", "No changes made.".yellow());
+            return Ok(());
+        }
+
+        let accounts_to_add: Vec<String> = selections
+            .iter()
+            .map(|&idx| available_accounts[idx].clone())
+            .collect();
+
+        config.mutate(|mut data| {
+            for account in &accounts_to_add {
+                if !data.ignored_accounts.contains(account) {
+                    data.ignored_accounts.push(account.clone());
+                }
+            }
+            data
+        })?;
+
+        println!();
+        println!(
+            "{} Added {} account(s) to ignore list:",
+            "✓".green(),
+            accounts_to_add.len()
+        );
+        for account in &accounts_to_add {
+            println!("  - {}", account.dimmed());
+        }
     }
 
     Ok(())
