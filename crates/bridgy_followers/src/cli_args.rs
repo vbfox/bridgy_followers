@@ -6,28 +6,25 @@ use clap::Parser;
 pub enum Command {
     /// Sync followers from Bluesky to Mastodon (default)
     Sync {
-        #[arg(
-            default_value = "bridgy_followers.toml",
-            help = "Path to configuration file"
-        )]
+        /// Path to configuration file
+        #[arg(default_value = "bridgy_followers.toml")]
         config: PathBuf,
 
-        #[arg(short, long, help = "Output file (defaults to stdout)")]
+        /// Output file (defaults to stdout)
+        #[arg(short, long)]
         output: Option<PathBuf>,
 
-        /// Increase verbosity level (-v, -vv, -vvv)
+        /// Increase verbosity level.
         #[arg(short, long, action = clap::ArgAction::Count)]
         verbose: u8,
     },
     /// Clear stored credentials and configuration
     Forget {
-        #[arg(
-            default_value = "bridgy_followers.toml",
-            help = "Path to configuration file"
-        )]
+        /// Path to configuration file
+        #[arg(default_value = "bridgy_followers.toml")]
         config: PathBuf,
 
-        /// Increase verbosity level (-v, -vv, -vvv)
+        /// Increase verbosity level.
         #[arg(short, long, action = clap::ArgAction::Count)]
         verbose: u8,
     },
