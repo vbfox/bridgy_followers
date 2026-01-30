@@ -1,4 +1,5 @@
-use color_eyre::Result;
+use color_eyre::{Result, eyre::eyre};
+use directories::ProjectDirs;
 use serde::{Deserialize, Serialize};
 use std::{
     fs, io,
@@ -54,7 +55,25 @@ impl Config {
         let new_data = mutation(self.data.clone());
         let toml_string = toml::to_string_pretty(&new_data)?;
         self.data = new_data;
+
+        // Ensure the parent directory exists
+        if let Some(parent) = self.path.parent() {
+            fs::create_dir_all(parent)?;
+        }
+
         fs::write(&self.path, toml_string)?;
         Ok(())
     }
+}
+
+/// Get the default configuration directory path
+pub fn default_config_dir() -> Result<PathBuf> {
+    ProjectDirs::from("net", "vbfox", "bridgy_followers")
+        .map(|proj_dirs| proj_dirs.config_dir().to_path_buf())
+        .ok_or_else(|| eyre!("Could not determine config directory"))
+}
+
+/// Get the default configuration file path
+pub fn default_config_path() -> Result<PathBuf> {
+    Ok(default_config_dir()?.join("config.toml"))
 }

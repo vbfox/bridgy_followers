@@ -16,6 +16,7 @@ clap.workspace = true
 color-eyre.workspace = true
 csv.workspace = true
 dialoguer.workspace = true
+directories.workspace = true
 dirs.workspace = true
 ipld-core.workspace = true
 keyring.workspace = true

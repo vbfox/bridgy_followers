@@ -6,7 +6,15 @@ A command-line tool to sync followers from Bluesky to Mastodon. It finds followe
 
 ## Configuration
 
-Create a `bridgy_followers.toml` configuration file:
+The configuration file is stored in a platform-dependent location:
+
+- **Linux**: `~/.config/bridgy_followers/bridgy_followers.toml` (follows XDG Base Directory specification)
+- **Windows**: `%APPDATA%\vbfox\bridgy_followers\config\bridgy_followers.toml` (typically `C:\Users\<User>\AppData\Roaming\vbfox\bridgy_followers\config\`)
+- **macOS**: `~/Library/Application Support/net.vbfox.bridgy_followers/bridgy_followers.toml`
+
+The configuration file will be created automatically on first run. You can also specify a custom configuration file path using the command-line arguments.
+
+### Configuration format
 
 ```toml
 bluesky_username = "your.handle.bsky.social"
@@ -38,7 +46,7 @@ Automatically follows new bridged accounts on Mastodon:
 bridgy_followers sync [config_file]
 ```
 
-- `[config_file]` - Path to configuration file (defaults to `bridgy_followers.toml`)
+- `[config_file]` - Optional path to custom configuration file (defaults to platform-dependent location)
 
 ### CSV command
 
@@ -48,7 +56,7 @@ Generate a CSV file for manual import into Mastodon:
 bridgy_followers csv [config_file] [-o OUTPUT]
 ```
 
-- `[config_file]` - Path to configuration file (defaults to `bridgy_followers.toml`)
+- `[config_file]` - Optional path to custom configuration file (defaults to platform-dependent location)
 - `-o, --output <FILE>` - Write output to a file instead of stdout
 
 ### Examples

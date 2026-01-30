@@ -2,7 +2,7 @@ use std::fs;
 use std::path::{Path, PathBuf};
 
 use crate::bluesky::{self};
-use crate::config::Config;
+use crate::config::{Config, default_config_path};
 use crate::follower_status::{FollowerStatus, get_follower_statuses, statuses_to_import_csv};
 use crate::{credentials, mastodon, utils::bluesky_handle_to_mastodon};
 use color_eyre::Result;
@@ -114,5 +114,11 @@ pub fn forget_command(config_path: &Path) -> Result<()> {
 
     println!("Credentials cleared");
 
+    Ok(())
+}
+
+pub fn config_command() -> Result<()> {
+    let default_path = default_config_path().unwrap_or_else(|_| "bridgy_followers.toml".into());
+    println!("{}", default_path.display());
     Ok(())
 }
