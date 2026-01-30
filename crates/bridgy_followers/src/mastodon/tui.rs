@@ -8,12 +8,14 @@ use dialoguer::{Input, Password, theme::ColorfulTheme};
 use keyring::CredentialBuilder;
 use megalodon::{Megalodon, mastodon::Mastodon, megalodon::AppInputOptions};
 use std::collections::HashSet;
+use tracing::info;
 
 use super::utils::create_client;
 use crate::{
     config::{Config, ConfigData},
     credentials,
     mastodon::utils::get_account_following,
+    println_or_info,
 };
 
 /// Prompt the user for the Mastodon server if not already set in config
@@ -111,22 +113,25 @@ pub async fn authenticate(
     Ok(client)
 }
 
-pub async fn get_following(client: &Mastodon) -> Result<HashSet<String>> {
-    println!("Fetching current user...");
+pub async fn get_following(client: &Mastodon, quiet: bool) -> Result<HashSet<String>> {
+    info!("Fetching current user...");
 
     let account_response = client
         .verify_account_credentials()
         .await
         .map_err(|e| eyre!("Failed to verify credentials: {}", e))?;
     let account = account_response.json();
-    println!(
+
+    println_or_info!(
+        quiet,
         "Fetching {} following list from Mastodon...",
         format!("@{}", &account.acct).blue()
     );
 
     let user_id = account.id;
     let following = get_account_following(client, user_id).await?;
-    println!(
+    println_or_info!(
+        quiet,
         "Found {} accounts you're following on Mastodon",
         following.len().yellow()
     );

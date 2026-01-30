@@ -56,3 +56,22 @@ pub fn init_tracing(verbose: u8) {
         .with(fmt_layer)
         .init();
 }
+
+/// Conditionally writes to either the tracing info! macro or println! based on a boolean.
+///
+/// # Usage
+/// ```
+/// write_or_info!(quiet, "Hello, world!");
+/// write_or_info!(quiet, "Value: {}", 42);
+/// write_or_info!(quiet, field1 = value1, field2 = value2, "Message");
+/// ```
+#[macro_export]
+macro_rules! println_or_info {
+    ($quiet:expr, $($arg:tt)*) => {
+        if $quiet {
+            tracing::info!($($arg)*);
+        } else {
+            println!($($arg)*);
+        }
+    };
+}

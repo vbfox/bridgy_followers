@@ -52,8 +52,9 @@ pub async fn get_follower_statuses(
     mastodon_user: &Mastodon,
     bluesky: &BlueskyAgent,
     ignored_accounts: &[String],
+    quiet: bool,
 ) -> Result<Vec<BridgedFollower>> {
-    let mastodon_following = mastodon::get_following(&mastodon_user).await?;
+    let mastodon_following = mastodon::get_following(&mastodon_user, quiet).await?;
 
     let bridgy_did = get_bridgy_did(&bluesky).await?;
     let bridgy_followers = get_known_followers(&bluesky, &bridgy_did).await?;
