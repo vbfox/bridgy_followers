@@ -10,9 +10,11 @@ mod cli_args;
 mod commands;
 mod config;
 mod credentials;
+mod follower_status;
 mod mastodon;
 mod tracing;
 mod utils;
+mod webfinger;
 
 #[tokio::main]
 async fn main() -> Result<()> {
