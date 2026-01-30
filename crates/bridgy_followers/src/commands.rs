@@ -7,6 +7,7 @@ use crate::follower_status::{FollowerStatus, get_follower_statuses, statuses_to_
 use crate::{credentials, mastodon, utils::bluesky_handle_to_mastodon};
 use color_eyre::Result;
 use color_eyre::owo_colors::OwoColorize;
+use dialoguer::{MultiSelect, theme::ColorfulTheme};
 
 pub async fn sync_command(config_path: PathBuf, _output_path: Option<PathBuf>) -> Result<()> {
     let mut config = Config::from_file(&config_path)?;
@@ -120,5 +121,56 @@ pub fn forget_command(config_path: &Path) -> Result<()> {
 pub fn config_command() -> Result<()> {
     let default_path = default_config_path().unwrap_or_else(|_| "bridgy_followers.toml".into());
     println!("{}", default_path.display());
+    Ok(())
+}
+
+pub fn ignores_command(config_path: &Path) -> Result<()> {
+    let mut config = Config::from_file(config_path)?;
+
+    let ignored_accounts = config.ignored_accounts().clone();
+
+    if ignored_accounts.is_empty() {
+        println!("{}", "No ignored accounts configured.".yellow());
+        return Ok(());
+    }
+
+    println!("Current ignored accounts:");
+    println!(
+        "{}",
+        "Select accounts to remove from ignore list (Space to select, Enter to confirm):".dimmed()
+    );
+    println!();
+
+    let selections = MultiSelect::with_theme(&ColorfulTheme::default())
+        .items(&ignored_accounts)
+        .interact()?;
+
+    if selections.is_empty() {
+        println!("{}", "No changes made.".yellow());
+        return Ok(());
+    }
+
+    // Remove selected accounts
+    let accounts_to_remove: Vec<String> = selections
+        .iter()
+        .map(|&idx| ignored_accounts[idx].clone())
+        .collect();
+
+    config.mutate(|mut data| {
+        data.ignored_accounts
+            .retain(|account| !accounts_to_remove.contains(account));
+        data
+    })?;
+
+    println!();
+    println!(
+        "{} Removed {} account(s) from ignore list:",
+        "✓".green(),
+        accounts_to_remove.len()
+    );
+    for account in &accounts_to_remove {
+        println!("  - {}", account.dimmed());
+    }
+
     Ok(())
 }

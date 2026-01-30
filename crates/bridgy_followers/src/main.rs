@@ -1,7 +1,7 @@
 #![allow(clippy::borrowed_box, reason = "Trigger on &Box<dyn Trait> parameters")]
 
 use crate::cli_args::{CliArgs, Command};
-use crate::commands::{config_command, csv_command, forget_command, sync_command};
+use crate::commands::{config_command, csv_command, forget_command, ignores_command, sync_command};
 use clap::Parser;
 use color_eyre::Result;
 
@@ -27,6 +27,7 @@ async fn main() -> Result<()> {
         Command::Sync { config, .. } => sync_command(config, None).await,
         Command::Csv { config, output, .. } => csv_command(config, output).await,
         Command::Forget { config, .. } => forget_command(&config),
+        Command::Ignores { config, .. } => ignores_command(&config),
         Command::Config { .. } => config_command(),
     }
 }

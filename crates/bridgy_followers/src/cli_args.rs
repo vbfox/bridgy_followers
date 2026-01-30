@@ -44,6 +44,16 @@ pub enum Command {
         #[arg(short, long, action = clap::ArgAction::Count)]
         verbose: u8,
     },
+    /// Manage ignored accounts interactively
+    Ignores {
+        /// Path to configuration file
+        #[arg(default_value_os_t = default_config_path())]
+        config: PathBuf,
+
+        /// Increase verbosity level.
+        #[arg(short, long, action = clap::ArgAction::Count)]
+        verbose: u8,
+    },
     // Get the default config path
     Config {
         /// Increase verbosity level.
@@ -58,6 +68,7 @@ impl Command {
             Command::Sync { verbose, .. }
             | Command::Forget { verbose, .. }
             | Command::Csv { verbose, .. }
+            | Command::Ignores { verbose, .. }
             | Command::Config { verbose, .. } => *verbose,
         }
     }
