@@ -1,3 +1,4 @@
+use std::fs;
 use std::path::{Path, PathBuf};
 
 use crate::bluesky::{self};
@@ -27,7 +28,7 @@ pub async fn sync_command(config_path: PathBuf, output_path: Option<PathBuf>) ->
     println!("{}", csv);
 
     if let Some(output_path) = output_path {
-        std::fs::write(&output_path, csv)?;
+        fs::write(&output_path, csv)?;
         println!("Wrote output to {}", output_path.display().blue());
     }
 
@@ -49,7 +50,7 @@ pub async fn csv_command(config_path: PathBuf, output_path: Option<PathBuf>) -> 
     println!("{}", csv);
 
     if let Some(output_path) = output_path {
-        std::fs::write(&output_path, csv)?;
+        fs::write(&output_path, csv)?;
         println!("Wrote output to {}", output_path.display().blue());
     }
 

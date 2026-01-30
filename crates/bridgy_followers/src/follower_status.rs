@@ -8,7 +8,7 @@ use atrium_api::types::string::Handle;
 use color_eyre::Result;
 use ipld_core::ipld::Ipld;
 use megalodon::mastodon::Mastodon;
-use std::collections::BTreeMap;
+use std::{collections::BTreeMap, io};
 use tracing::info;
 
 /// Represents a bridged follower with their current status
@@ -216,7 +216,7 @@ pub fn write_statuses_to_import_csv<W>(
     statuses: &[BridgedFollower],
 ) -> csv::Result<()>
 where
-    W: std::io::Write,
+    W: io::Write,
 {
     csv_writer.write_record([
         "Account address",

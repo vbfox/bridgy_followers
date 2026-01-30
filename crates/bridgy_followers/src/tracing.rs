@@ -1,3 +1,5 @@
+use std::env;
+
 use color_eyre::owo_colors::OwoColorize;
 use tracing_subscriber::{
     EnvFilter,
@@ -7,7 +9,7 @@ use tracing_subscriber::{
 
 pub fn init_tracing(verbose: u8) {
     // If RUST_LOG is set, respect it and ignore verbosity level
-    if std::env::var("RUST_LOG").is_ok() {
+    if env::var("RUST_LOG").is_ok() {
         let env_filter = EnvFilter::try_from_default_env().unwrap();
         tracing_subscriber::registry()
             .with(env_filter)

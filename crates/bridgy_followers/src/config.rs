@@ -1,6 +1,9 @@
 use color_eyre::Result;
 use serde::{Deserialize, Serialize};
-use std::path::{Path, PathBuf};
+use std::{
+    fs, io,
+    path::{Path, PathBuf},
+};
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct ConfigData {
@@ -30,12 +33,12 @@ impl Config {
 
     /// Load the configuration from a file
     pub fn from_file(path: &Path) -> Result<Self> {
-        let data = match std::fs::read_to_string(path) {
+        let data = match fs::read_to_string(path) {
             Ok(contents) => {
                 let data: ConfigData = toml::from_str(&contents)?;
                 data
             }
-            Err(e) if e.kind() == std::io::ErrorKind::NotFound => ConfigData::default(),
+            Err(e) if e.kind() == io::ErrorKind::NotFound => ConfigData::default(),
             Err(e) => {
                 return Err(e.into());
             }
@@ -51,7 +54,7 @@ impl Config {
         let new_data = mutation(self.data.clone());
         let toml_string = toml::to_string_pretty(&new_data)?;
         self.data = new_data;
-        std::fs::write(&self.path, toml_string)?;
+        fs::write(&self.path, toml_string)?;
         Ok(())
     }
 }
