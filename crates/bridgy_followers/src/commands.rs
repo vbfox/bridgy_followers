@@ -40,7 +40,7 @@ pub async fn sync_command(config_path: PathBuf, _output_path: Option<PathBuf>) -
 
     for follower in ready_to_follow {
         let mastodon_handle = bluesky_handle_to_mastodon(&follower.handle);
-        print!("Following @{}... ", mastodon_handle);
+        print!("Following {}... ", format!("@{}", mastodon_handle).blue());
 
         match mastodon::follow_account(&mastodon_user, &mastodon_handle).await {
             Ok(_) => {
