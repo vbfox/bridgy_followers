@@ -24,7 +24,7 @@ async fn main() -> Result<()> {
     tracing::init_tracing(cli.command.verbose());
 
     match cli.command {
-        Command::Sync { config, output, .. } => sync_command(config, output).await,
+        Command::Sync { config, .. } => sync_command(config, None).await,
         Command::Csv { config, output, .. } => csv_command(config, output).await,
         Command::Forget { config, .. } => forget_command(&config),
     }

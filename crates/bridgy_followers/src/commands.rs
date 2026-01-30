@@ -3,12 +3,12 @@ use std::path::{Path, PathBuf};
 
 use crate::bluesky::{self};
 use crate::config::Config;
-use crate::follower_status::{get_follower_statuses, statuses_to_import_csv};
-use crate::{credentials, mastodon};
+use crate::follower_status::{FollowerStatus, get_follower_statuses, statuses_to_import_csv};
+use crate::{credentials, mastodon, utils::bluesky_handle_to_mastodon};
 use color_eyre::Result;
 use color_eyre::owo_colors::OwoColorize;
 
-pub async fn sync_command(config_path: PathBuf, output_path: Option<PathBuf>) -> Result<()> {
+pub async fn sync_command(config_path: PathBuf, _output_path: Option<PathBuf>) -> Result<()> {
     let mut config = Config::from_file(&config_path)?;
 
     let credential_builder = keyring::default::default_credential_builder();
@@ -16,20 +16,55 @@ pub async fn sync_command(config_path: PathBuf, output_path: Option<PathBuf>) ->
     // Query the Mastodon user follows
     let mastodon_user = mastodon::authenticate(&credential_builder, &mut config).await?;
     let bluesky = bluesky::authenticate(&credential_builder, &mut config).await?;
-    let statuses = get_follower_statuses(
-        &mastodon_user,
-        &bluesky,
-        config.ignored_accounts(),
-        output_path.is_none(),
-    )
-    .await?;
+    let statuses =
+        get_follower_statuses(&mastodon_user, &bluesky, config.ignored_accounts(), false).await?;
 
-    let csv = statuses_to_import_csv(&statuses)?;
-    println!("{}", csv);
+    // Filter for accounts ready to follow
+    let ready_to_follow: Vec<_> = statuses
+        .iter()
+        .filter(|s| s.status == FollowerStatus::ReadyToFollow)
+        .collect();
 
-    if let Some(output_path) = output_path {
-        fs::write(&output_path, csv)?;
-        println!("Wrote output to {}", output_path.display().blue());
+    if ready_to_follow.is_empty() {
+        println!("{}", "No new accounts to follow!".green());
+        return Ok(());
+    }
+
+    println!(
+        "Found {} new account(s) to follow",
+        ready_to_follow.len().yellow()
+    );
+
+    let mut success_count = 0;
+    let mut error_count = 0;
+
+    for follower in ready_to_follow {
+        let mastodon_handle = bluesky_handle_to_mastodon(&follower.handle);
+        print!("Following @{}... ", mastodon_handle);
+
+        match mastodon::follow_account(&mastodon_user, &mastodon_handle).await {
+            Ok(_) => {
+                println!("{}", "✓".green());
+                success_count += 1;
+            }
+            Err(e) => {
+                println!("{}", "✗".red());
+                eprintln!("  Error: {}", e.to_string().red());
+                error_count += 1;
+            }
+        }
+    }
+
+    println!();
+    println!(
+        "Successfully followed {} account(s)",
+        success_count.to_string().green()
+    );
+    if error_count > 0 {
+        println!(
+            "Failed to follow {} account(s)",
+            error_count.to_string().red()
+        );
     }
 
     Ok(())

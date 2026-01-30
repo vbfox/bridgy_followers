@@ -15,6 +15,31 @@ pub fn create_client(base_url: &str, access_token: Option<String>) -> Result<Mas
     .wrap_err_with(|| format!("Failed to create Mastodon client at {base_url}"))
 }
 
+/// Follow an account on Mastodon by its handle (e.g., "user@bsky.brid.gy")
+#[instrument(skip(client))]
+pub async fn follow_account(client: &Mastodon, account_handle: &str) -> Result<()> {
+    let account_response = client
+        .lookup_account(account_handle.to_string())
+        .await
+        .wrap_err_with(|| format!("Failed to lookup account {}", account_handle))?;
+
+    let account = account_response.json();
+
+    client
+        .follow_account(account.id.clone(), None)
+        .await
+        .wrap_err_with(|| {
+            format!(
+                "Failed to follow account {} (id: {})",
+                account_handle, account.id
+            )
+        })?;
+
+    info!(%account.id, "Successfully followed {}", account_handle);
+
+    Ok(())
+}
+
 /// Get all accounts which the given acount is following.
 #[instrument(skip(client))]
 pub async fn get_account_following(client: &Mastodon, user_id: String) -> Result<Vec<Account>> {

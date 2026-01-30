@@ -50,6 +50,7 @@ async fn register_application(server_url: String) -> Result<String> {
                 scopes: Some(vec![
                     String::from("read:accounts"),
                     String::from("read:follows"),
+                    String::from("write:follows"),
                 ]),
                 redirect_uris: Some(String::from("urn:ietf:wg:oauth:2.0:oob")),
                 website: None,

@@ -4,15 +4,11 @@ use clap::Parser;
 
 #[derive(Parser)]
 pub enum Command {
-    /// Sync followers from Bluesky to Mastodon
+    /// Sync followers from Bluesky to Mastodon (follows new bridged accounts automatically)
     Sync {
         /// Path to configuration file
         #[arg(default_value = "bridgy_followers.toml")]
         config: PathBuf,
-
-        /// Output file (defaults to stdout)
-        #[arg(short, long)]
-        output: Option<PathBuf>,
 
         /// Increase verbosity level.
         #[arg(short, long, action = clap::ArgAction::Count)]

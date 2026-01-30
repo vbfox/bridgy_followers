@@ -1,6 +1,6 @@
 # Bridgy followers
 
-A command-line tool to sync followers from Bluesky to Mastodon. It finds followers of your Bluesky account that also follow the [Bridgy][Bridgy] account and generates a CSV file to import them into Mastodon.
+A command-line tool to sync followers from Bluesky to Mastodon. It finds followers of your Bluesky account that also follow the [Bridgy][Bridgy] account and automatically follows them on Mastodon, or generates a CSV file for manual import.
 
 [Bridgy]: https://bsky.app/profile/ap.brid.gy
 
@@ -26,13 +26,26 @@ bridgy_followers <COMMAND>
 
 ### Commands
 
-- `sync` - Sync followers from Bluesky to Mastodon (default)
+- `sync` - Sync followers from Bluesky to Mastodon (automatically follows new bridged accounts)
+- `csv` - Generate a CSV file that can be manually imported into Mastodon
 - `forget` - Clear stored credentials and configuration
 
 ### Sync command
 
+Automatically follows new bridged accounts on Mastodon:
+
 ```sh
-bridgy_followers sync [config_file] [-o OUTPUT]
+bridgy_followers sync [config_file]
+```
+
+- `[config_file]` - Path to configuration file (defaults to `bridgy_followers.toml`)
+
+### CSV command
+
+Generate a CSV file for manual import into Mastodon:
+
+```sh
+bridgy_followers csv [config_file] [-o OUTPUT]
 ```
 
 - `[config_file]` - Path to configuration file (defaults to `bridgy_followers.toml`)
@@ -40,16 +53,22 @@ bridgy_followers sync [config_file] [-o OUTPUT]
 
 ### Examples
 
-Output to stdout:
+Automatically follow new bridged accounts:
 
 ```sh
 bridgy_followers sync
 ```
 
-Output to a file with a custom configuration file:
+Generate CSV for manual import:
 
 ```sh
-bridgy_followers sync my_config.toml -o followers.csv
+bridgy_followers csv -o followers.csv
+```
+
+Use a custom configuration file:
+
+```sh
+bridgy_followers sync my_config.toml
 ```
 
 Clear stored credentials:
@@ -58,4 +77,4 @@ Clear stored credentials:
 bridgy_followers forget
 ```
 
-Import the new follows into Mastodon using the `/settings/imports` page (Preferences > Import and Export > Import).
+To manually import a CSV file into Mastodon, use the `/settings/imports` page (Preferences > Import and Export > Import).
