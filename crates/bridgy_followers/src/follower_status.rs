@@ -54,10 +54,10 @@ pub async fn get_follower_statuses(
     ignored_accounts: &[String],
     quiet: bool,
 ) -> Result<Vec<BridgedFollower>> {
-    let mastodon_following = mastodon::get_following(&mastodon_user, quiet).await?;
+    let mastodon_following = mastodon::get_following(mastodon_user, quiet).await?;
 
-    let bridgy_did = get_bridgy_did(&bluesky).await?;
-    let bridgy_followers = get_known_followers(&bluesky, &bridgy_did).await?;
+    let bridgy_did = get_bridgy_did(bluesky).await?;
+    let bridgy_followers = get_known_followers(bluesky, &bridgy_did).await?;
     let to_process = bridgy_followers.values();
 
     let mut result = Vec::<BridgedFollower>::new();
@@ -108,7 +108,7 @@ pub async fn get_follower_statuses(
     // the user bridged at some point but no longer it's not good enough.
 
     let relationships = get_relationships(
-        &bluesky,
+        bluesky,
         bridgy_did.clone().into(),
         to_process.iter().map(|f| f.did.clone().into()),
     )
@@ -218,7 +218,7 @@ pub fn write_statuses_to_import_csv<W>(
 where
     W: std::io::Write,
 {
-    csv_writer.write_record(&[
+    csv_writer.write_record([
         "Account address",
         "Show boosts",
         "Notify on new posts",
@@ -226,17 +226,14 @@ where
     ])?;
 
     for status in statuses {
-        match &status.status {
-            FollowerStatus::ReadyToFollow => {
-                let mastodon_handle = crate::utils::bluesky_handle_to_mastodon(&status.handle);
-                csv_writer.write_record(&[
-                    format!("@{mastodon_handle}"),
-                    "true".to_string(),
-                    "false".to_string(),
-                    "".to_string(),
-                ])?;
-            }
-            _ => {}
+        if status.status == FollowerStatus::ReadyToFollow {
+            let mastodon_handle = crate::utils::bluesky_handle_to_mastodon(&status.handle);
+            csv_writer.write_record(&[
+                format!("@{mastodon_handle}"),
+                "true".to_string(),
+                "false".to_string(),
+                "".to_string(),
+            ])?;
         }
     }
 
