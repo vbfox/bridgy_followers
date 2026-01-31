@@ -56,6 +56,8 @@ pub async fn get_follower_statuses(
 ) -> Result<Vec<BridgedFollower>> {
     let mastodon_following = mastodon::get_following(mastodon_user, quiet).await?;
 
+    // Start the process with all users that the bridge account follows on Bluesky that the user's Bluesky account
+    // also follows
     let bridgy_did = get_bridgy_did(bluesky).await?;
     let bridgy_followers = get_known_followers(bluesky, &bridgy_did).await?;
     let to_process = bridgy_followers.values();
@@ -63,7 +65,7 @@ pub async fn get_follower_statuses(
     let mut result = Vec::<BridgedFollower>::new();
 
     // ----------------------------------------------------------------------
-    // Pass 1: ignored and already-followed
+    // Pass 1: filter accounts ignored in the configuration or already followed on Mastodon
     // This is the cheapest check, we have all the data to find out right away if we need to process further
     let to_process: Vec<_> = to_process
         .filter(|bsky_user| {
@@ -104,8 +106,9 @@ pub async fn get_follower_statuses(
 
     // ----------------------------------------------------------------------
     // Pass 2: relationship checks
-    // We check if the bridge follow the users on Bluesky, this check is cheap but incomplete as in some cases where
-    // the user bridged at some point but no longer it's not good enough.
+    // Check if the user is really followed by the bridge (It should be the case if get_known_followers returned it)
+    // and if the user doesn't block the bridge either directly or via a block list as it would prevent bridging.
+    // This remove users that activated bridging but then deactivated it by blocking the bridge.
 
     let relationships = get_relationships(
         bluesky,
@@ -158,11 +161,6 @@ pub async fn get_follower_statuses(
                         return false;
                     }
 
-                    // TODO: Find out why there are weird cases;
-                    // - '@thornbulle.bsky.social' doesn't report following the bridge but is bridged
-                    // - '@terribletoybox.com@bsky.brid.gy' follows both way but is not bridged
-                    // - '@pwnallthethings.bsky.social@bsky.brid.gy' same
-
                     info!(
                         ?followed_by_bridge,
                         ?blocks_bridge,
@@ -179,6 +177,7 @@ pub async fn get_follower_statuses(
     // ----------------------------------------------------------------------
     // Pass 3: for all potential new follows check that the user is really bridged by directly querying their profile
     // using the webfinger endpoint of the bridge (acting as an Activity Pub server)
+    // This remove users that activated bridging but then deactivated it via the web interface.
 
     for bsky_user in to_process {
         let mastodon_handle = bluesky_handle_to_mastodon(&bsky_user.handle);
