@@ -20,6 +20,12 @@ enum Task {
     Build,
     /// Run clippy the same way CI does, including its RUSTFLAGS
     Clippy,
+    /// Run cargo fmt for the whole workspace
+    Fmt {
+        /// Check formatting without applying any changes
+        #[arg(long)]
+        check: bool,
+    },
 }
 
 fn main() -> ExitCode {
@@ -27,6 +33,7 @@ fn main() -> ExitCode {
     let result = match cli.task {
         Task::Build => build(),
         Task::Clippy => clippy(),
+        Task::Fmt { check } => fmt(check),
     };
 
     if let Err(e) = result {
@@ -69,6 +76,24 @@ fn clippy() -> Result<(), DynError> {
 
     if !status.success() {
         Err("cargo clippy failed")?;
+    }
+    Ok(())
+}
+
+fn fmt(check: bool) -> Result<(), DynError> {
+    let cargo = env::var("CARGO").unwrap_or_else(|_| "cargo".to_string());
+    let mut args = vec!["fmt", "--all"];
+    if check {
+        args.extend(["--", "--check"]);
+    }
+
+    let status = Command::new(cargo)
+        .current_dir(project_root())
+        .args(args)
+        .status()?;
+
+    if !status.success() {
+        Err("cargo fmt failed")?;
     }
     Ok(())
 }
