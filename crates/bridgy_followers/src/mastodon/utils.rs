@@ -21,7 +21,7 @@ pub async fn follow_account(client: &Mastodon, account_handle: &str) -> Result<(
     let account_response = client
         .lookup_account(account_handle.to_string())
         .await
-        .wrap_err_with(|| format!("Failed to lookup account {}", account_handle))?;
+        .wrap_err_with(|| format!("Failed to lookup account {account_handle}"))?;
 
     let account = account_response.json();
 

@@ -3,6 +3,7 @@ use std::env;
 use color_eyre::owo_colors::OwoColorize;
 use tracing_subscriber::{
     EnvFilter,
+    field::MakeExt,
     fmt::{self, format::debug_fn},
     prelude::*,
 };
@@ -37,10 +38,10 @@ pub fn init_tracing(verbose: u8) {
             .with_level(false)
             .without_time()
             .with_target(false)
-            .map_fmt_fields(|f| f.display_messages())
+            .map_fmt_fields(MakeExt::display_messages)
             .fmt_fields(debug_fn(|writer, field, value| {
                 if field.name() == "message" {
-                    write!(writer, "{}", format!("{:?}", value).dimmed())
+                    write!(writer, "{}", format!("{value:?}").dimmed())
                 } else {
                     Ok(())
                 }

@@ -126,7 +126,7 @@ pub async fn get_following(client: &Mastodon, quiet: bool) -> Result<HashSet<Str
     println_or_info!(
         quiet,
         "Fetching {} following list from Mastodon...",
-        format!("@{}", &account.acct).blue()
+        format!("@{}", account.acct).blue()
     );
 
     let user_id = account.id;

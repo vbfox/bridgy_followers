@@ -34,6 +34,9 @@ async fn main() -> Result<()> {
             IgnoresCommand::List { config, .. } => ignores_list_command(&config),
             IgnoresCommand::Add { account, .. } => ignores_add_command(account).await,
         },
-        Command::Config { .. } => config_command(),
+        Command::Config { .. } => {
+            config_command();
+            Ok(())
+        }
     }
 }

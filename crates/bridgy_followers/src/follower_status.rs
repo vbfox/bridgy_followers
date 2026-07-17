@@ -4,11 +4,18 @@ use crate::{
     utils::{BRIDGY_ACTIVITY_PUB_URL, bluesky_handle_to_mastodon},
     webfinger,
 };
-use atrium_api::types::string::Handle;
+use atrium_api::{
+    app::bsky::actor::defs::ProfileViewData,
+    types::{
+        Object,
+        string::{Did, Handle},
+    },
+};
 use color_eyre::Result;
 use ipld_core::ipld::Ipld;
 use megalodon::mastodon::Mastodon;
-use std::{collections::BTreeMap, io};
+use std::collections::{BTreeMap, HashSet};
+use std::io;
 use tracing::info;
 
 /// Represents a bridged follower with their current status
@@ -48,26 +55,13 @@ pub enum NotBridgedReason {
     NoAccountOnBridgy,
 }
 
-pub async fn get_follower_statuses(
-    mastodon_user: &Mastodon,
-    bluesky: &BlueskyAgent,
+fn filter_ignored_or_already_following<'a>(
+    to_process: impl Iterator<Item = &'a Object<ProfileViewData>>,
     ignored_accounts: &[String],
-    quiet: bool,
-) -> Result<Vec<BridgedFollower>> {
-    let mastodon_following = mastodon::get_following(mastodon_user, quiet).await?;
-
-    // Start the process with all users that the bridge account follows on Bluesky that the user's Bluesky account
-    // also follows
-    let bridgy_did = get_bridgy_did(bluesky).await?;
-    let bridgy_followers = get_known_followers(bluesky, &bridgy_did).await?;
-    let to_process = bridgy_followers.values();
-
-    let mut result = Vec::<BridgedFollower>::new();
-
-    // ----------------------------------------------------------------------
-    // Pass 1: filter accounts ignored in the configuration or already followed on Mastodon
-    // This is the cheapest check, we have all the data to find out right away if we need to process further
-    let to_process: Vec<_> = to_process
+    mastodon_following: &HashSet<String>,
+    result: &mut Vec<BridgedFollower>,
+) -> Vec<&'a Object<ProfileViewData>> {
+    to_process
         .filter(|bsky_user| {
             let ignored = ignored_accounts
                 .iter()
@@ -102,14 +96,15 @@ pub async fn get_follower_statuses(
 
             true
         })
-        .collect();
+        .collect()
+}
 
-    // ----------------------------------------------------------------------
-    // Pass 2: relationship checks
-    // Check if the user is really followed by the bridge (It should be the case if get_known_followers returned it)
-    // and if the user doesn't block the bridge either directly or via a block list as it would prevent bridging.
-    // This remove users that activated bridging but then deactivated it by blocking the bridge.
-
+async fn filter_blocking_bridge<'a>(
+    bluesky: &BlueskyAgent,
+    bridgy_did: &Did,
+    to_process: Vec<&'a Object<ProfileViewData>>,
+    result: &mut Vec<BridgedFollower>,
+) -> Result<Vec<&'a Object<ProfileViewData>>> {
     let relationships = get_relationships(
         bluesky,
         bridgy_did.clone().into(),
@@ -117,7 +112,7 @@ pub async fn get_follower_statuses(
     )
     .await?;
 
-    let to_process: Vec<_> = to_process
+    Ok(to_process
         .into_iter()
         .filter(|bsky_user| {
             match relationships.get(&bsky_user.did) {
@@ -172,13 +167,13 @@ pub async fn get_follower_statuses(
                 }
             }
         })
-        .collect();
+        .collect())
+}
 
-    // ----------------------------------------------------------------------
-    // Pass 3: for all potential new follows check that the user is really bridged by directly querying their profile
-    // using the webfinger endpoint of the bridge (acting as an Activity Pub server)
-    // This remove users that activated bridging but then deactivated it via the web interface.
-
+async fn check_webfinger_bridging(
+    to_process: Vec<&Object<ProfileViewData>>,
+    result: &mut Vec<BridgedFollower>,
+) -> Result<()> {
     for bsky_user in to_process {
         let mastodon_handle = bluesky_handle_to_mastodon(&bsky_user.handle);
 
@@ -207,6 +202,45 @@ pub async fn get_follower_statuses(
         }
     }
 
+    Ok(())
+}
+
+
+pub async fn get_follower_statuses(
+    mastodon_user: &Mastodon,
+    bluesky: &BlueskyAgent,
+    ignored_accounts: &[String],
+    quiet: bool,
+) -> Result<Vec<BridgedFollower>> {
+    let mastodon_following = mastodon::get_following(mastodon_user, quiet).await?;
+
+    // Start the process with all users that the bridge account follows on Bluesky that the user's Bluesky account
+    // also follows
+    let bridgy_did = get_bridgy_did(bluesky).await?;
+    let bridgy_followers = get_known_followers(bluesky, &bridgy_did).await?;
+
+    let mut result = Vec::<BridgedFollower>::new();
+
+    // Pass 1: filter accounts ignored in the configuration or already followed on Mastodon.
+    // This is the cheapest check, we have all the data to find out right away if we need to process further.
+    let to_process = filter_ignored_or_already_following(
+        bridgy_followers.values(),
+        ignored_accounts,
+        &mastodon_following,
+        &mut result,
+    );
+
+    // Pass 2: relationship checks. Check if the user is really followed by the bridge (It should be the case if
+    // get_known_followers returned it) and if the user doesn't block the bridge either directly or via a block
+    // list as it would prevent bridging. This remove users that activated bridging but then deactivated it by
+    // blocking the bridge.
+    let to_process = filter_blocking_bridge(bluesky, &bridgy_did, to_process, &mut result).await?;
+
+    // Pass 3: for all potential new follows check that the user is really bridged by directly querying their
+    // profile using the webfinger endpoint of the bridge (acting as an Activity Pub server). This remove users
+    // that activated bridging but then deactivated it via the web interface.
+    check_webfinger_bridging(to_process, &mut result).await?;
+
     Ok(result)
 }
 
@@ -231,7 +265,7 @@ where
                 format!("@{mastodon_handle}"),
                 "true".to_string(),
                 "false".to_string(),
-                "".to_string(),
+                String::new(),
             ])?;
         }
     }

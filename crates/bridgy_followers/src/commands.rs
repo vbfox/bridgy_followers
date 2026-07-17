@@ -39,10 +39,10 @@ pub async fn sync_command(config_path: PathBuf, _output_path: Option<PathBuf>) -
 
     for follower in ready_to_follow {
         let mastodon_handle = bluesky_handle_to_mastodon(&follower.handle);
-        print!("Following {}... ", format!("@{}", mastodon_handle).blue());
+        print!("Following {}... ", format!("@{mastodon_handle}").blue());
 
         match mastodon::follow_account(&mastodon_user, &mastodon_handle).await {
-            Ok(_) => {
+            Ok(()) => {
                 println!("{}", "✓".green());
                 success_count += 1;
             }
@@ -80,7 +80,7 @@ pub async fn csv_command(config_path: PathBuf, output_path: Option<PathBuf>) -> 
         get_follower_statuses(&mastodon_user, &bluesky, config.ignored_accounts(), true).await?;
 
     let csv = statuses_to_import_csv(&statuses)?;
-    println!("{}", csv);
+    println!("{csv}");
 
     if let Some(output_path) = output_path {
         fs::write(&output_path, csv)?;
@@ -118,10 +118,9 @@ pub fn forget_command(config_path: &Path) -> Result<()> {
     Ok(())
 }
 
-pub fn config_command() -> Result<()> {
+pub fn config_command() {
     let default_path = default_config_path().unwrap_or_else(|_| "bridgy_followers.toml".into());
     println!("{}", default_path.display());
-    Ok(())
 }
 
 pub fn ignores_list_command(config_path: &Path) -> Result<()> {
