@@ -8,6 +8,9 @@ use clap::{Parser, Subcommand};
 
 type DynError = Box<dyn std::error::Error>;
 
+// We currently build megalodon using a path.crates.io dependency and it generates dead code warnings.
+const RUSTFLAGS: &str = "-D warnings -A dead_code";
+
 #[derive(Parser)]
 struct Cli {
     #[command(subcommand)]
@@ -26,6 +29,13 @@ enum Task {
         #[arg(long)]
         check: bool,
     },
+    /// Run the bridgy_followers binary
+    #[command(disable_help_flag = true, disable_version_flag = true)]
+    Run {
+        /// Arguments passed through to the bridgy_followers binary
+        #[arg(trailing_var_arg = true, allow_hyphen_values = true)]
+        args: Vec<String>,
+    },
 }
 
 fn main() -> ExitCode {
@@ -34,6 +44,7 @@ fn main() -> ExitCode {
         Task::Build => build(),
         Task::Clippy => clippy(),
         Task::Fmt { check } => fmt(check),
+        Task::Run { args } => run(args),
     };
 
     if let Err(e) = result {
@@ -47,6 +58,7 @@ fn build() -> Result<(), DynError> {
     let cargo = env::var("CARGO").unwrap_or_else(|_| "cargo".to_string());
     let status = Command::new(cargo)
         .current_dir(project_root())
+        .env("RUSTFLAGS", RUSTFLAGS)
         .args(["build", "--workspace", "--exclude", "xtask"])
         .status()?;
 
@@ -60,8 +72,7 @@ fn clippy() -> Result<(), DynError> {
     let cargo = env::var("CARGO").unwrap_or_else(|_| "cargo".to_string());
     let status = Command::new(cargo)
         .current_dir(project_root())
-        // We currently build megalodon using path.crates.io dependency and it generate dead code warnings.
-        .env("RUSTFLAGS", "-D warnings -A dead_code")
+        .env("RUSTFLAGS", RUSTFLAGS)
         .args([
             "clippy",
             "--all-targets",
@@ -94,6 +105,30 @@ fn fmt(check: bool) -> Result<(), DynError> {
 
     if !status.success() {
         Err("cargo fmt failed")?;
+    }
+    Ok(())
+}
+
+fn run(args: Vec<String>) -> Result<(), DynError> {
+    let cargo = env::var("CARGO").unwrap_or_else(|_| "cargo".to_string());
+    let mut cargo_args = vec![
+        "run".to_string(),
+        "--package".to_string(),
+        "bridgy_followers".to_string(),
+    ];
+    if !args.is_empty() {
+        cargo_args.push("--".to_string());
+        cargo_args.extend(args);
+    }
+
+    let status = Command::new(cargo)
+        .current_dir(project_root())
+        .env("RUSTFLAGS", RUSTFLAGS)
+        .args(cargo_args)
+        .status()?;
+
+    if !status.success() {
+        Err("cargo run failed")?;
     }
     Ok(())
 }
