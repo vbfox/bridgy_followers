@@ -40,7 +40,7 @@ fn build() -> Result<(), DynError> {
     let cargo = env::var("CARGO").unwrap_or_else(|_| "cargo".to_string());
     let status = Command::new(cargo)
         .current_dir(project_root())
-        .args(["build"])
+        .args(["build", "--workspace", "--exclude", "xtask"])
         .status()?;
 
     if !status.success() {
