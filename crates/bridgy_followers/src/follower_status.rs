@@ -205,7 +205,6 @@ async fn check_webfinger_bridging(
     Ok(())
 }
 
-
 pub async fn get_follower_statuses(
     mastodon_user: &Mastodon,
     bluesky: &BlueskyAgent,
