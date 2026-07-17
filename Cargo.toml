@@ -1,5 +1,6 @@
 [workspace]
 members = ["crates/bridgy_followers", "xtask"]
+default-members = ["crates/bridgy_followers"]
 resolver = "2"
 
 [workspace.package]
