@@ -134,7 +134,7 @@ pub async fn get_follower_statuses(
                     false
                 }
                 Some(relationship) => {
-                    // Blocks are a Recent adition to the Lexicon, not yet in atrium
+                    // Blocks are a Recent addition to the Lexicon, not yet in atrium
                     // https://github.com/bluesky-social/atproto/pull/4418
                     let extra_data: BTreeMap<String, Ipld> = relationship
                         .extra_data
