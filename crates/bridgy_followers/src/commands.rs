@@ -12,10 +12,8 @@ use dialoguer::{MultiSelect, theme::ColorfulTheme};
 pub async fn sync_command(config_path: PathBuf, _output_path: Option<PathBuf>) -> Result<()> {
     let mut config = Config::from_file(&config_path)?;
 
-    let credential_builder = keyring::default::default_credential_builder();
-
-    let mastodon_user = mastodon::authenticate(&credential_builder, &mut config).await?;
-    let bluesky = bluesky::authenticate(&credential_builder, &mut config).await?;
+    let mastodon_user = mastodon::authenticate(&mut config).await?;
+    let bluesky = bluesky::authenticate(&mut config).await?;
     let statuses =
         get_follower_statuses(&mastodon_user, &bluesky, config.ignored_accounts(), false).await?;
 
@@ -72,10 +70,8 @@ pub async fn sync_command(config_path: PathBuf, _output_path: Option<PathBuf>) -
 pub async fn csv_command(config_path: PathBuf, output_path: Option<PathBuf>) -> Result<()> {
     let mut config = Config::from_file(&config_path)?;
 
-    let credential_builder = keyring::default::default_credential_builder();
-
-    let mastodon_user = mastodon::authenticate(&credential_builder, &mut config).await?;
-    let bluesky = bluesky::authenticate(&credential_builder, &mut config).await?;
+    let mastodon_user = mastodon::authenticate(&mut config).await?;
+    let bluesky = bluesky::authenticate(&mut config).await?;
     let statuses =
         get_follower_statuses(&mastodon_user, &bluesky, config.ignored_accounts(), true).await?;
 
@@ -93,18 +89,12 @@ pub async fn csv_command(config_path: PathBuf, output_path: Option<PathBuf>) -> 
 pub fn forget_command(config_path: &Path) -> Result<()> {
     let mut config = Config::from_file(config_path)?;
 
-    let credential_builder = keyring::default::default_credential_builder();
-
     // Get current values before clearing
     let bluesky_username = config.bluesky_username().map(ToString::to_string);
     let mastodon_server = config.mastodon_server().map(ToString::to_string);
 
     // Delete credentials from keyring
-    credentials::delete_credentials(
-        &credential_builder,
-        mastodon_server.as_deref(),
-        bluesky_username.as_deref(),
-    );
+    credentials::delete_credentials(mastodon_server.as_deref(), bluesky_username.as_deref());
 
     // Clear config values
     config.mutate(|mut data| {
@@ -197,10 +187,8 @@ pub async fn ignores_add_command(account: Option<String>) -> Result<()> {
         println!("{} Added '{}' to ignore list", "✓".green(), account_handle);
     } else {
         // Interactive mode - query followers and let user select
-        let credential_builder = keyring::default::default_credential_builder();
-
-        let mastodon_user = mastodon::authenticate(&credential_builder, &mut config).await?;
-        let bluesky = bluesky::authenticate(&credential_builder, &mut config).await?;
+        let mastodon_user = mastodon::authenticate(&mut config).await?;
+        let bluesky = bluesky::authenticate(&mut config).await?;
 
         println!("Fetching followers...");
         let statuses =

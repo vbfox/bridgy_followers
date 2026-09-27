@@ -5,7 +5,6 @@ use color_eyre::{
 };
 use dialoguer::{Input, Password, theme::ColorfulTheme};
 
-use keyring::CredentialBuilder;
 use megalodon::{Megalodon, mastodon::Mastodon, megalodon::AppInputOptions};
 use std::collections::HashSet;
 use tracing::info;
@@ -90,13 +89,10 @@ async fn register_application(server_url: String) -> Result<String> {
     Ok(access_token)
 }
 
-pub async fn authenticate(
-    credential_builder: &Box<CredentialBuilder>,
-    config: &mut Config,
-) -> Result<Mastodon> {
+pub async fn authenticate(config: &mut Config) -> Result<Mastodon> {
     let server_url = get_server(config)?;
 
-    let credentials = credentials::get_mastodon_access_token(credential_builder, &server_url)?;
+    let credentials = credentials::get_mastodon_access_token(&server_url)?;
 
     let access_token = if let Ok(token) = credentials.get_password() {
         token
